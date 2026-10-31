@@ -15,6 +15,7 @@ import {
   readStoredQueue,
   readStoredSinks,
   retryDelay,
+  trimQueue,
   type DeliveryEntry,
   type PendingDelivery,
 } from '../../src/core/sinks/delivery';
@@ -279,6 +280,21 @@ describe('keeping the delivery log and the queue to a sensible size', () => {
 
   it('never stores a value in a delivery entry', () => {
     expect(Object.keys(entry('a'))).not.toContain('data');
+  });
+});
+
+describe('a queue that has filled up', () => {
+  it('keeps the newest deliveries and reports the ones that were pushed out', () => {
+    const queue = ['a', 'b', 'c', 'd'].map((id) => pending({ id }));
+
+    const { kept, dropped } = trimQueue(queue, 3);
+
+    expect(kept.map((item) => item.id)).toEqual(['b', 'c', 'd']);
+    expect(dropped.map((item) => item.id)).toEqual(['a']);
+  });
+
+  it('drops nothing while there is room', () => {
+    expect(trimQueue([pending()], 3)).toEqual({ kept: [pending()], dropped: [] });
   });
 });
 

@@ -53,6 +53,15 @@ export const RETRY_DELAYS_MS = [30_000, 120_000, 600_000, 1_800_000] as const;
 export const DELIVERY_LOG_CAP = 500;
 export const QUEUE_CAP = 200;
 
+/** Keeps the newest `cap` deliveries and returns the older ones that no longer fit. */
+export function trimQueue(
+  queue: readonly PendingDelivery[],
+  cap: number = QUEUE_CAP,
+): { kept: PendingDelivery[]; dropped: PendingDelivery[] } {
+  const overflow = Math.max(0, queue.length - cap);
+  return { kept: queue.slice(overflow), dropped: queue.slice(0, overflow) };
+}
+
 /** How long to wait after this many failed tries, or undefined when the tries have run out. */
 export function retryDelay(attemptsMade: number): number | undefined {
   return RETRY_DELAYS_MS[attemptsMade - 1];

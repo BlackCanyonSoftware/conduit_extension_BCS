@@ -1,12 +1,12 @@
 import { appendCapture, capturesFor } from '../core/capture';
 import { ruleStatus, type Rule } from '../core/rules/types';
 import {
-  QUEUE_CAP,
   afterFailure,
   appendDelivery,
   dueDeliveries,
   nextWake,
   planSinkDeliveries,
+  trimQueue,
   type DeliveryEntry,
   type PendingDelivery,
   type SeenDigests,
@@ -73,6 +73,23 @@ async function wakeAt(queue: readonly PendingDelivery[]): Promise<void> {
   await setDeliveryWake(wake === undefined ? undefined : Math.max(wake, Date.now() + 1000));
 }
 
+/** A full queue pushes out its oldest values; say so in the delivery log instead of losing them silently. */
+async function recordDropped(
+  state: StoredState,
+  dropped: readonly PendingDelivery[],
+): Promise<void> {
+  let deliveries = (await loadState()).deliveries;
+  for (const item of dropped) {
+    const sink = state.sinks.find((candidate) => candidate.id === item.sinkId);
+    if (!sink) continue;
+    deliveries = appendDelivery(
+      deliveries,
+      entryFor(item, sink, 'failed', 'The waiting list was full, so this value was dropped.'),
+    );
+  }
+  await saveDeliveries(deliveries);
+}
+
 /** Queues what the rules that send to an app want sent for these cookies, then tries to send. */
 async function queueForSinks(
   state: StoredState,
@@ -94,8 +111,10 @@ async function queueForSinks(
     seen = plan.seen;
   }
   if (created.length > 0) {
-    await saveQueue([...state.queue, ...created].slice(-QUEUE_CAP));
+    const { kept, dropped } = trimQueue([...state.queue, ...created]);
+    await saveQueue(kept);
     await saveSeen(pruneSeen(seen, state.rules));
+    if (dropped.length > 0) await recordDropped(state, dropped);
   }
   return created.length;
 }
