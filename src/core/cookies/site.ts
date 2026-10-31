@@ -28,6 +28,16 @@ const SECOND_LEVEL_LABELS = new Set([
 
 const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
 
+/** True for hosts that are used exactly as written: IP addresses and single-label names. */
+function isExactHost(host: string): boolean {
+  return host.startsWith('[') || IPV4.test(host) || !host.includes('.');
+}
+
+/** The match patterns to ask the browser for so a site and its subdomains can be read. */
+export function patternsForSite(site: string): string[] {
+  return isExactHost(site) ? [`*://${site}/*`] : [`*://*.${site}/*`];
+}
+
 /** Works out which site a page address belongs to, for reading its cookies. */
 export function siteScopeFor(address: string | undefined): SiteScope {
   if (!address) return { supported: false };
@@ -41,8 +51,8 @@ export function siteScopeFor(address: string | undefined): SiteScope {
 
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   const labels = host.split('.');
-  if (host.startsWith('[') || IPV4.test(host) || labels.length < 2) {
-    return { supported: true, site: host, patterns: [`*://${host}/*`] };
+  if (isExactHost(host)) {
+    return { supported: true, site: host, patterns: patternsForSite(host) };
   }
 
   const last = labels.at(-1) ?? '';
@@ -50,5 +60,5 @@ export function siteScopeFor(address: string | undefined): SiteScope {
   const keep =
     last.length === 2 && SECOND_LEVEL_LABELS.has(secondLast) && labels.length >= 3 ? 3 : 2;
   const site = labels.slice(-keep).join('.');
-  return { supported: true, site, patterns: [`*://*.${site}/*`] };
+  return { supported: true, site, patterns: patternsForSite(site) };
 }
