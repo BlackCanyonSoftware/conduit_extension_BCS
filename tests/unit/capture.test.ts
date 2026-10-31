@@ -33,6 +33,7 @@ function entry(overrides: Partial<CaptureEntry> = {}): CaptureEntry {
     ruleId: 'rule-1',
     ruleText: "Save the cookie sid from example.com to Conduit's local log.",
     site: 'example.com',
+    origin: 'https://www.example.com',
     destination: 'log',
     data: { sid: 'old' },
     bytes: 13,
@@ -70,7 +71,12 @@ describe('US-004: picking out the cookies a rule names', () => {
 
 describe('US-006: what a capture records', () => {
   it('records the time, the rule as it read then, the value and its size', () => {
-    const entries = capturesFor(makeRule(), [cookie({ name: 'sid', value: 'abc' })], [], ctx());
+    const entries = capturesFor(
+      makeRule(),
+      [cookie({ name: 'sid', value: 'abc', domain: 'www.example.com', secure: true })],
+      [],
+      ctx(),
+    );
 
     expect(entries).toEqual([
       {
@@ -79,6 +85,7 @@ describe('US-006: what a capture records', () => {
         ruleId: 'rule-1',
         ruleText: "Save the cookie sid from example.com to Conduit's local log.",
         site: 'example.com',
+        origin: 'https://www.example.com',
         destination: 'log',
         data: { sid: 'abc' },
         bytes: 13,
@@ -139,6 +146,13 @@ describe('US-006: keeping the log to a sensible size', () => {
 
     expect(parsed).toMatchObject({ conduit: 1, kind: 'capture-log' });
     expect(parsed.entries).toHaveLength(1);
+  });
+
+  it('reads an older entry that has no origin, filling it in from the site', () => {
+    const older: Record<string, unknown> = { ...entry() };
+    delete older.origin;
+
+    expect(readStoredLog([older])).toEqual([entry({ origin: 'https://example.com' })]);
   });
 
   it('reads a stored log back, skipping damaged entries', () => {

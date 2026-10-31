@@ -51,8 +51,14 @@ export function mountRules(root: HTMLElement): RulesView {
     fileInput.click();
   });
   exportButton.addEventListener('click', () => {
-    downloadText('conduit-rules.json', exportRules(current.rules), 'application/json');
-    status.textContent = `Exported ${String(current.rules.length)} ${current.rules.length === 1 ? 'rule' : 'rules'}. The file does not include approvals.`;
+    const { text, skipped } = exportRules(current.rules);
+    const exported = current.rules.length - skipped;
+    downloadText('conduit-rules.json', text, 'application/json');
+    status.textContent =
+      `Exported ${String(exported)} ${exported === 1 ? 'rule' : 'rules'}. The file does not include approvals.` +
+      (skipped === 0
+        ? ''
+        : ` ${String(skipped)} ${skipped === 1 ? 'rule that sends' : 'rules that send'} to an app ${skipped === 1 ? 'was' : 'were'} left out: an app is set up from its own request.`);
   });
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];

@@ -24,8 +24,9 @@ const validRule = {
 
 describe('US-007: exporting rules', () => {
   it('writes only what a rule does, never its approval', () => {
-    const text = exportRules([makeRule({ names: ['sid', 'theme'] })]);
+    const { text, skipped } = exportRules([makeRule({ names: ['sid', 'theme'] })]);
 
+    expect(skipped).toBe(0);
     expect(JSON.parse(text)).toEqual({
       conduit: 1,
       kind: 'rules',
@@ -42,9 +43,23 @@ describe('US-007: exporting rules', () => {
   });
 });
 
+describe('US-007: rules that send to an app are not shared in a file', () => {
+  it('leaves them out and says how many, because an app is set up from its own request', () => {
+    const toApp = makeRule({
+      id: 'r2',
+      destination: { kind: 'sink', sinkId: 's1', wantId: 'w1' },
+    });
+
+    const { text, skipped } = exportRules([makeRule(), toApp]);
+
+    expect(skipped).toBe(1);
+    expect((JSON.parse(text) as { rules: unknown[] }).rules).toHaveLength(1);
+  });
+});
+
 describe('US-007: importing rules', () => {
   it('brings rules in disabled and unapproved, with new ids', () => {
-    const rules = importRules(exportRules([makeRule()]), newId, () => NOW);
+    const rules = importRules(exportRules([makeRule()]).text, newId, () => NOW);
 
     expect(rules).toEqual([
       {
@@ -116,6 +131,18 @@ describe('US-007: importing rules', () => {
 });
 
 describe('reading rules back from storage', () => {
+  it('keeps a rule that sends to an app, which a file can never carry', () => {
+    const toApp = makeRule({ destination: { kind: 'sink', sinkId: 's1', wantId: 'w1' } });
+
+    expect(readStoredRules([toApp])).toEqual([toApp]);
+  });
+
+  it('skips a stored rule whose app reference is incomplete', () => {
+    const broken = { ...makeRule(), destination: { kind: 'sink', sinkId: 's1' } };
+
+    expect(readStoredRules([broken])).toEqual([]);
+  });
+
   it('keeps valid stored rules exactly as saved', () => {
     const rule = makeRule({ names: ['sid', 'theme'] });
 

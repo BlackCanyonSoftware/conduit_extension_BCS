@@ -1,8 +1,16 @@
-/** Where a rule's captures go. Local applications arrive in milestone 3. */
+/** Captures are saved to Conduit's own log. */
 export interface LogDestination {
   kind: 'log';
 }
-export type Destination = LogDestination;
+
+/** Captures are sent to an app the person added, as the request `wantId` it made. */
+export interface SinkDestination {
+  kind: 'sink';
+  sinkId: string;
+  wantId: string;
+}
+
+export type Destination = LogDestination | SinkDestination;
 
 /**
  * An approved statement of what to capture, from where, and where to put it.

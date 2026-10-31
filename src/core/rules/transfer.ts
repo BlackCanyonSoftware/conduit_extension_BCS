@@ -1,5 +1,5 @@
 import { isRecord } from '../records';
-import type { Rule } from './types';
+import type { Destination, Rule } from './types';
 import { checkNames, normalizeSite } from './validate';
 
 /** Thrown when a rules file cannot be imported. The message says what to fix. */
@@ -13,19 +13,47 @@ const MAX_RULES = 200;
 
 type Definition = Pick<Rule, 'kind' | 'site' | 'names' | 'destination'>;
 
-/** Writes the rules' definitions as a file. Approval and on/off state are never shared. */
-export function exportRules(rules: readonly Rule[]): string {
-  const definitions: Definition[] = rules.map((rule) => ({
+/**
+ * Writes the rules' definitions as a file. Approval and on/off state are never shared.
+ * Rules that send to an app are left out (and counted): an app is set up from its own
+ * request, on the computer that will run it.
+ */
+export function exportRules(rules: readonly Rule[]): { text: string; skipped: number } {
+  const shareable = rules.filter((rule) => rule.destination.kind === 'log');
+  const definitions: Definition[] = shareable.map((rule) => ({
     kind: rule.kind,
     site: rule.site,
     names: [...rule.names],
-    destination: { ...rule.destination },
+    destination: { kind: 'log' },
   }));
-  return `${JSON.stringify({ conduit: FILE_VERSION, kind: 'rules', rules: definitions }, null, 2)}\n`;
+  return {
+    text: `${JSON.stringify({ conduit: FILE_VERSION, kind: 'rules', rules: definitions }, null, 2)}\n`,
+    skipped: rules.length - shareable.length,
+  };
+}
+
+/** Reads a rule's destination; an app destination is accepted only from our own storage. */
+function readDestination(raw: unknown, allowSink: boolean): Destination | undefined {
+  if (!isRecord(raw)) return undefined;
+  if (raw.kind === 'log') return { kind: 'log' };
+  if (
+    allowSink &&
+    raw.kind === 'sink' &&
+    typeof raw.sinkId === 'string' &&
+    raw.sinkId !== '' &&
+    typeof raw.wantId === 'string' &&
+    raw.wantId !== ''
+  ) {
+    return { kind: 'sink', sinkId: raw.sinkId, wantId: raw.wantId };
+  }
+  return undefined;
 }
 
 /** Checks the part of a rule that says what it does, returning it or what is wrong. */
-function readDefinition(raw: unknown): { definition: Definition } | { problem: string } {
+function readDefinition(
+  raw: unknown,
+  allowSink: boolean,
+): { definition: Definition } | { problem: string } {
   if (!isRecord(raw)) return { problem: 'it is not a rule.' };
   if (raw.kind !== 'cookie') return { problem: 'the kind must be "cookie".' };
 
@@ -39,11 +67,9 @@ function readDefinition(raw: unknown): { definition: Definition } | { problem: s
   const namesProblem = checkNames(names);
   if (namesProblem) return { problem: namesProblem };
 
-  const destination = raw.destination;
-  if (!isRecord(destination) || destination.kind !== 'log') {
-    return { problem: "the destination must be Conduit's local log." };
-  }
-  return { definition: { kind: 'cookie', site, names: [...names], destination: { kind: 'log' } } };
+  const destination = readDestination(raw.destination, allowSink);
+  if (!destination) return { problem: "the destination must be Conduit's local log." };
+  return { definition: { kind: 'cookie', site, names: [...names], destination } };
 }
 
 /**
@@ -77,7 +103,7 @@ export function importRules(text: string, newId: () => string, now: () => string
 
   const createdAt = now();
   return list.map((raw: unknown, index) => {
-    const result = readDefinition(raw);
+    const result = readDefinition(raw, false);
     if ('problem' in result) {
       throw new RuleImportError(`Rule ${String(index + 1)}: ${result.problem}`);
     }
@@ -91,7 +117,7 @@ export function readStoredRules(raw: unknown): Rule[] {
   const rules: Rule[] = [];
   for (const item of raw as unknown[]) {
     if (!isRecord(item)) continue;
-    const result = readDefinition(item);
+    const result = readDefinition(item, true);
     const { id, enabled, createdAt, approvedAt } = item;
     if (
       'problem' in result ||

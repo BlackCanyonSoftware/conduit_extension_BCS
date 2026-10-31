@@ -25,6 +25,35 @@ describe('US-004: describing a rule in one sentence', () => {
   });
 });
 
+describe('US-008, US-010: describing a rule that sends to an app', () => {
+  const sendRule = makeRule({ destination: { kind: 'sink', sinkId: 's1', wantId: 'w1' } });
+  const app = { name: 'Test App', url: 'http://127.0.0.1:8778', loopback: true };
+
+  it('names the app and where it is', () => {
+    expect(describeRule(sendRule, app)).toBe(
+      'Send the cookie sid from example.com to 127.0.0.1:8778 (Test App).',
+    );
+  });
+
+  it('says so when the app is on another computer', () => {
+    expect(
+      describeRule(sendRule, {
+        name: 'Test App',
+        url: 'https://sink.example.net',
+        loopback: false,
+      }),
+    ).toBe(
+      'Send the cookie sid from example.com to sink.example.net (Test App), which is not on this computer.',
+    );
+  });
+
+  it('says so when the app has been removed', () => {
+    expect(describeRule(sendRule)).toBe(
+      'Send the cookie sid from example.com to an app that is no longer set up.',
+    );
+  });
+});
+
 describe('US-005: what state a rule is in', () => {
   it('is active only when approved, enabled and not paused', () => {
     expect(ruleStatus(makeRule(), false)).toBe('active');

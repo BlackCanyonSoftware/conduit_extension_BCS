@@ -10,6 +10,8 @@ export interface CaptureEntry {
   ruleId: string;
   ruleText: string;
   site: string;
+  /** Where the cookie was set, for example `https://www.example.com`. */
+  origin: string;
   destination: 'log';
   data: Record<string, string>;
   bytes: number;
@@ -17,6 +19,11 @@ export interface CaptureEntry {
 
 /** The log keeps this many of the newest entries. */
 export const LOG_CAP = 1000;
+
+/** The origin a cookie belongs to: https if it is Secure, and its domain without a leading dot. */
+export function cookieOrigin(cookie: Pick<Cookie, 'secure' | 'domain'>): string {
+  return `${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}`;
+}
 
 /** Whether a cookie's domain is the site or one of its subdomains. */
 export function cookieBelongsToSite(cookieDomain: string, site: string): boolean {
@@ -71,6 +78,7 @@ export function capturesFor(
       ruleId: rule.id,
       ruleText: describeRule(rule),
       site: rule.site,
+      origin: cookieOrigin(cookie),
       destination: 'log',
       data,
       bytes: captureBytes(data),
@@ -119,6 +127,7 @@ export function readStoredLog(raw: unknown): CaptureEntry[] {
         ruleId: item.ruleId,
         ruleText: item.ruleText,
         site: item.site,
+        origin: typeof item.origin === 'string' ? item.origin : `https://${item.site}`,
         destination: 'log',
         data: item.data,
         bytes: item.bytes,
