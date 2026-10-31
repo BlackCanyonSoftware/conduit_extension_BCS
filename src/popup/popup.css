@@ -1,0 +1,39 @@
+/* Popup layout only. Colour, type and spacing come from the brand tokens. */
+body.popup {
+  width: 380px;
+  min-height: 160px;
+  margin: 0;
+}
+
+.popup-actions {
+  margin-inline-start: auto;
+}
+
+.popup-main {
+  padding: var(--s-4);
+}
+
+.popup-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.popup-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.popup-info {
+  margin-block-start: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-tint);
+  border-radius: var(--r-md);
+  background: var(--info-bg);
+  font-size: var(--fs-sm);
+}
+
+.popup-info p {
+  margin: 0;
+}

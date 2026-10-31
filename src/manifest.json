@@ -2,5 +2,18 @@
   "manifest_version": 3,
   "name": "Conduit",
   "description": "Export your own browser's cookies and hand approved data to local apps you choose.",
-  "minimum_chrome_version": "120"
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "theme/icon/icon-transparent-16.png",
+    "32": "theme/icon/icon-transparent-32.png",
+    "192": "theme/icon/icon-transparent-192.png"
+  },
+  "action": {
+    "default_title": "Conduit",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "theme/icon/icon-transparent-16.png",
+      "32": "theme/icon/icon-transparent-32.png"
+    }
+  }
 }

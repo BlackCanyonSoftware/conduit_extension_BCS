@@ -2,7 +2,7 @@
 // Bundles each entry point with esbuild and writes manifest.json with the version
 // taken from package.json, which is the single source of truth for it.
 import { build } from 'esbuild';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,7 +10,17 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Output path (without extension) -> source file. Entries are added with the
 // screens and workers that need them; see docs/ROADMAP.md.
-const ENTRY_POINTS = {};
+const ENTRY_POINTS = { 'popup/popup': 'src/popup/popup.ts' };
+
+// Files copied as they are: source path -> path inside the extension.
+const STATIC_FILES = {
+  'src/popup/popup.html': 'popup/popup.html',
+  'src/popup/popup.css': 'popup/popup.css',
+};
+
+// The parts of the brand bundle (src/theme) the extension pages use. The page
+// partials (*.html) are templates for other projects and are left out.
+const THEME_DIRS = ['font', 'icon', 'mark', 'template', 'theme', 'ui', 'wordmark'];
 
 async function buildExtension(outDir) {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
@@ -23,10 +33,21 @@ async function buildExtension(outDir) {
     `${JSON.stringify({ ...manifest, version: pkg.version }, null, 2)}\n`,
   );
 
-  const entries = Object.entries(ENTRY_POINTS);
-  if (entries.length === 0) return;
+  for (const [from, to] of Object.entries(STATIC_FILES)) {
+    await mkdir(path.dirname(path.join(outDir, to)), { recursive: true });
+    await cp(path.join(root, from), path.join(outDir, to));
+  }
+  for (const dir of THEME_DIRS) {
+    await cp(path.join(root, 'src', 'theme', dir), path.join(outDir, 'theme', dir), {
+      recursive: true,
+      filter: (source) => !source.endsWith('.html'),
+    });
+  }
+
   await build({
-    entryPoints: Object.fromEntries(entries.map(([out, src]) => [out, path.join(root, src)])),
+    entryPoints: Object.fromEntries(
+      Object.entries(ENTRY_POINTS).map(([out, src]) => [out, path.join(root, src)]),
+    ),
     outdir: outDir,
     bundle: true,
     format: 'esm',

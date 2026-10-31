@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Conduit</title>
+    <!-- Brand sheets, in the order the brand kit requires (src/theme/BRAND.md). -->
+    <link rel="stylesheet" href="../theme/theme/theme.css" />
+    <link rel="stylesheet" href="../theme/template/tokens.css" />
+    <link rel="stylesheet" href="../theme/template/fonts.css" />
+    <link rel="stylesheet" href="../theme/template/base.css" />
+    <link rel="stylesheet" href="../theme/template/components.css" />
+    <link rel="stylesheet" href="../theme/template/layout.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="popup">
+    <header class="bk-header">
+      <div class="bk-brand">
+        <img src="../theme/mark/mark.svg" alt="" width="34" height="34" class="bk-mark" />
+        <img
+          src="../theme/wordmark/wordmark-light.svg"
+          alt="Conduit"
+          width="180"
+          height="34"
+          class="bk-only-light"
+        />
+        <img
+          src="../theme/wordmark/wordmark-dark.svg"
+          alt="Conduit"
+          width="180"
+          height="34"
+          class="bk-only-dark"
+        />
+      </div>
+      <div class="bk-actions popup-actions">
+        <button
+          class="icon-btn"
+          id="bk-theme"
+          type="button"
+          aria-pressed="false"
+          aria-label="Switch to a dark background"
+        >
+          <svg class="icon lg" aria-hidden="true" focusable="false">
+            <use class="bk-only-light" href="../theme/ui/icons.svg#i-moon"></use>
+            <use class="bk-only-dark" href="../theme/ui/icons.svg#i-sun"></use>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="popup-main">
+      <section aria-labelledby="status-title">
+        <div class="popup-heading">
+          <h1 id="status-title" class="popup-title">Conduit is set up</h1>
+          <button
+            class="icon-btn plain"
+            type="button"
+            data-info-toggle
+            aria-controls="info-status"
+            aria-expanded="false"
+            aria-label="About this screen"
+          >
+            <svg class="icon lg" aria-hidden="true" focusable="false">
+              <use href="../theme/ui/icons.svg#i-info"></use>
+            </svg>
+          </button>
+        </div>
+        <p class="muted">No rules yet, so nothing is being shared.</p>
+        <div id="info-status" class="popup-info" hidden>
+          <p>
+            Conduit exports your own browser's cookies and hands the values you choose to local apps
+            you approve. It does nothing until you create and approve a rule.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="../theme/template/theme-switch.js"></script>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

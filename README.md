@@ -1,3 +1,12 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="docs/brand/lockup/banner/lockup-horizontal-dark-banner.png">
+    <img alt="Conduit" width="480"
+         src="docs/brand/lockup/banner/lockup-horizontal-light-banner.png">
+  </picture>
+</p>
+
 # Conduit
 
 A free, open-source browser extension for the data your own browser already holds.

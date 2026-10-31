@@ -8,3 +8,4 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Project scaffolding: TypeScript, esbuild build, Vitest, ESLint, Prettier, CI workflow.
+- A first popup in the Conduit brand theme, with a light/dark toggle (sun/moon icon) and an info (i) button that shows or hides explanatory text.
