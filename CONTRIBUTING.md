@@ -40,7 +40,9 @@ Unit tests live in `tests/unit/` and describe behaviour through public interface
 Reference PRD story IDs (`US-001`) in test names where they apply. End-to-end tests
 use Playwright with the built extension loaded in headless Chromium
 (`tests/e2e/`); run `npx playwright install chromium` once, then `npm run test:e2e`.
-They include automated accessibility checks (axe) for every screen. `npm run test:e2e`
+They include automated accessibility checks (axe) for every screen. One test runs
+`examples/reference_sink.py`, so it needs Python 3 on the path (`python` on Windows,
+`python3` elsewhere) and skips itself without it. `npm run test:e2e`
 builds a test copy that pre-grants site access to `localhost` (a test cannot click the
 browser's permission prompt); release builds never do that.
 

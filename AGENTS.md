@@ -28,6 +28,7 @@ npm run format         # Prettier, write
 - `src/manifest.json`: manifest without a version (the build takes it from `package.json`).
 - `src/core/`: pure logic, no browser APIs (`cookies/` formats and site scope, `redact.ts`).
 - `src/platform/`: the only code that touches `chrome.*` (pages and the worker call it).
+- `examples/` the reference app (Python, standard library only), also exercised by an end-to-end test.
 - `src/background/` service worker, `src/popup/` and `src/options/` pages, `src/ui/` helpers shared by pages.
 - `scripts/build.mjs`: esbuild entry points live in `ENTRY_POINTS`.
 - `tests/unit/`: Vitest. Name tests after PRD story IDs (`US-001`).
@@ -45,7 +46,9 @@ npm run format         # Prettier, write
 
 - Nothing is captured until the user has approved a rule; a fresh install does nothing.
 - Every rule reads as one sentence: what, from which origin, to which destination.
-- Loopback destinations by default; other hosts need a typed confirmation and stay marked.
+- Loopback destinations by default; other hosts must use https, need the host name typed, and stay marked.
+- An app only proposes requests (with a required reason); the person approves, and each approved request is a rule. A rules file never carries an app destination or an approval.
+- A failed delivery is shown at once and retried from `chrome.alarms`; the delivery log never holds values; pausing halts delivery.
 - Imported rules arrive disabled and need the same approval as a hand-made one.
 - Site access is requested per site at runtime; never `<all_urls>` in the manifest.
 - Captures are written to extension storage immediately; retries use `chrome.alarms`.
