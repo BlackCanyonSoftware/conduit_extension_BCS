@@ -9,4 +9,4 @@ echo "$staged" | xargs npx prettier --check --ignore-unknown
 
 lintable=$(echo "$staged" | grep -E '\.(ts|js|mjs)$' || true)
 [ -z "$lintable" ] && exit 0
-echo "$lintable" | xargs npx eslint
+echo "$lintable" | xargs npx eslint --no-warn-ignored
