@@ -1,4 +1,5 @@
 import { cookieBelongsToSite, type Observed } from './capture';
+import { extractFrom } from './extract';
 import type { HeaderDirection, Rule } from './rules/types';
 
 /** The headers of one web request or response, as the browser reports them. */
@@ -34,9 +35,12 @@ export function matchRuleHeaders(rule: Rule, observation: HeaderObservation): Ob
     if (value === undefined || !rule.names.includes(lower)) continue;
     values.set(lower, [...(values.get(lower) ?? []), value]);
   }
-  return [...values].map(([name, parts]) => ({
-    name,
-    value: parts.join(', '),
-    origin: url.origin,
-  }));
+  return extractFrom(
+    rule,
+    [...values].map(([name, parts]) => ({
+      name,
+      value: parts.join(', '),
+      origin: url.origin,
+    })),
+  );
 }

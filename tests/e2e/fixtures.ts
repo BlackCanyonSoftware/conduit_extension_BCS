@@ -232,10 +232,17 @@ export const test = base.extend<Fixtures>({
         'token=0123456789abcdefXYZ; Path=/app; Secure',
       ]);
       response.setHeader('Content-Type', 'text/html');
-      // The page asks for /ping with a header of its own; `?req=value` changes its value.
+      // The page asks for /ping with a header of its own, and keeps some values in its storage.
+      // `?req=`, `?local=`, `?session=` and `?tok=` change them.
       response.end(
-        '<!doctype html><title>Test site</title><h1>Test site</h1>' +
-          "<script>fetch('/ping', { headers: { 'X-Conduit-Req': new URLSearchParams(location.search).get('req') ?? 'request-value-1234', 'X-Not-Asked': 'x' } });</script>",
+        '<!doctype html><title>Test site</title><h1>Test site</h1><script>' +
+          'const q = new URLSearchParams(location.search);' +
+          "fetch('/ping', { headers: { 'X-Conduit-Req': q.get('req') ?? 'request-value-1234', 'X-Not-Asked': 'x' } });" +
+          "localStorage.setItem('conduit-local', q.get('local') ?? 'local-value-1234');" +
+          "localStorage.setItem('conduit-json', JSON.stringify({ token: q.get('tok') ?? 'json-token-1', visits: Date.now() }));" +
+          "localStorage.setItem('conduit-other', 'not-asked-for');" +
+          "sessionStorage.setItem('conduit-session', q.get('session') ?? 'session-value-1234');" +
+          '</script>',
       );
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));

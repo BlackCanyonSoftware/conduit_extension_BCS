@@ -50,15 +50,15 @@ src/
     rules/       rule model and status, one-sentence summary, validation, import/export
     capture.ts   matching, duplicate-skipping captures, the capped log
     headers.ts   picks the named headers out of a request or response
+    page-storage.ts  picks the named storage keys out of a page read; which keys a page needs
     sinks/       address and loopback rules, handshake reader, delivery queue and retry schedule
     redact.ts    first/last four preview
-    extract.ts   regex / JSON-path extractors (milestone 5)
+    extract.ts   regex / JSON-path extractors: checking, applying, describing
   platform/      thin wrappers over chrome.* / browser.* (the only code that touches them)
   background/    service worker: cookie-change capture, delivery queue and retries (alarms), badge
   popup/         popup UI: cookies for the active site, rules bar and kill switch
   options/       rules page: rules, approval, local apps, delivery log, capture log
   ui/            helpers shared by the pages: DOM builder, download, info toggle, theme button, shared.css
-  content/       storage-reading content script (milestone 5)
   theme/         brand template CSS bundled from the brand kit (generated)
 examples/        reference sink (Python, standard library only)
 tests/           unit, e2e
@@ -78,9 +78,11 @@ erDiagram
   RULE ||--o{ DELIVERY : logs
   RULE {
     string id
-    string kind "cookie or header; storage later"
+    string kind "cookie, header or storage"
     string site "main domain, subdomains included"
     string direction "header rules only: request or response"
+    string area "storage rules only: local or session"
+    object extract "optional: keep a pattern match or a JSON field"
     string[] names
     string destination "log now; a sink in milestone 3"
     bool enabled

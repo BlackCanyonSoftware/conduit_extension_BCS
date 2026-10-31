@@ -42,9 +42,11 @@ Nothing an app asks for is active until you approve it.
 | `name`              | What to call the app. Up to 80 characters.                                                                                                                                                         |
 | `wants`             | The requests, up to 50. May be empty.                                                                                                                                                              |
 | `wants[].id`        | Your id for the request: letters, digits, `.`, `_`, `-`, up to 64 characters, unique in the list. It comes back in every delivery.                                                                 |
-| `wants[].kind`      | `cookie` or `header`. `storage` is reserved for a later version; Conduit shows such requests and says it cannot approve them yet.                                                                  |
+| `wants[].kind`      | `cookie`, `header` or `storage`. Any other kind is shown to the person with a note that Conduit cannot approve it.                                                                                 |
 | `wants[].origin`    | The site, as a bare domain or an address; a `*.` prefix is allowed. Conduit works with the main domain and its subdomains, so `https://api.example.com` and `example.com` both mean `example.com`. |
 | `wants[].names`     | For `cookie`: the cookie names, up to 50. For `header`: the header names, up to 50. Header names are not case sensitive; Conduit shows and delivers them in lower case.                            |
+| `wants[].area`      | For `storage` only: `local` (localStorage; the default) or `session` (sessionStorage). For `storage`, `names` are the keys, which are case sensitive.                                              |
+| `wants[].extract`   | Optional, any kind. Keep only part of each value: `{ "type": "regex", "pattern": "id=(\\d+)" }` (the first group, or the whole match) or `{ "type": "jsonpath", "path": "$.user.token" }`.         |
 | `wants[].direction` | For `header` only: `request` (what the browser sends; the default) or `response` (what it gets back).                                                                                              |
 | `wants[].why`       | **Required.** One or two plain sentences, up to 500 characters. Conduit shows it word for word when you approve the request. A request without one cannot be approved.                             |
 
@@ -68,7 +70,18 @@ The answer should be small: Conduit reads at most 100,000 characters and waits 5
 - `origin` is where the cookie was set (`https` if the cookie is Secure, otherwise `http`), or, for a header, the scheme, host and port of the request.
 - `data` holds the cookie that changed, or the header that was seen, for example `{ "authorization": "..." }` (names in lower case). Each change is its own delivery. Only the headers named in the approved request are ever read; a header that appears twice in one message arrives as one value joined with `, `.
 
-A header is delivered when its value is new: the same value seen again is not sent again.
+A header or storage value is delivered when it is new: the same value seen again is not sent again.
+
+### Extractors
+
+When a request has an `extract`, the app receives only what it keeps, in the same `data` field, under the same name. Conduit shows the extractor in the sentence the person approves (for example "keeping only the field $.user.token"). If the extractor finds nothing in a value (the pattern does not match, the value is not JSON, the field is missing), that value is not captured at all.
+
+- **`regex`**: a JavaScript regular expression, up to 200 characters. With a group in brackets the first group is kept, otherwise the whole match. Back-references and a repeated repeat such as `(a+)+` are refused, and values over 20,000 characters are not matched.
+- **`jsonpath`**: `$.a.b`, `$.list[0]`, `$['a key']`. A string is kept as it is, a number or boolean as text, an object or list as JSON text.
+
+### Storage requests
+
+For a `storage` request Conduit reads the named keys of the page's localStorage or sessionStorage (top frame only) when a page on that site finishes loading, and when the person presses "Capture now". `origin` in the delivery is the page's scheme, host and port.
 
 Answer **`204 No Content`** when you have it. Anything else counts as a failure.
 

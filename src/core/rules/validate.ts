@@ -1,5 +1,5 @@
 import { siteScopeFor } from '../cookies/site';
-import type { HeaderDirection } from './types';
+import type { HeaderDirection, StorageArea } from './types';
 
 export const MAX_NAMES = 50;
 export const MAX_NAME_LENGTH = 200;
@@ -63,6 +63,54 @@ export function checkHeaderNames(names: readonly string[]): string | undefined {
     }
   }
   return undefined;
+}
+
+/** A message describing what is wrong with a list of storage keys, or undefined when it is fine. */
+export function checkStorageKeys(names: readonly string[]): string | undefined {
+  if (names.length === 0) return 'Enter at least one key.';
+  if (names.length > MAX_NAMES) return `Use at most ${String(MAX_NAMES)} keys per rule.`;
+  for (const name of names) {
+    if (name.length > MAX_NAME_LENGTH) {
+      return `A key can be at most ${String(MAX_NAME_LENGTH)} characters.`;
+    }
+    const bad = Array.from(name).some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127;
+    });
+    if (bad) {
+      return `"${name.replace(/[^\x20-\x7e]/g, '?')}" is not a valid key: it has control characters.`;
+    }
+  }
+  return undefined;
+}
+
+export interface StorageRuleDraft extends RuleDraft {
+  area: StorageArea;
+}
+
+export type StorageDraftResult =
+  { ok: true; draft: StorageRuleDraft } | { ok: false; errors: { site?: string; names?: string } };
+
+/** Checks what the person typed into the new-rule form for a storage rule. Keys keep their case. */
+export function parseStorageRuleDraft(input: {
+  site: string;
+  names: string;
+  area: StorageArea;
+}): StorageDraftResult {
+  const errors: { site?: string; names?: string } = {};
+
+  const site = normalizeSite(input.site);
+  if (input.site.trim() === '') errors.site = 'Enter a site, for example example.com.';
+  else if (site === undefined) errors.site = 'That does not look like a website address.';
+
+  const names = splitNames(input.names);
+  const namesError = checkStorageKeys(names);
+  if (namesError) errors.names = namesError;
+
+  if (errors.site !== undefined || errors.names !== undefined || site === undefined) {
+    return { ok: false, errors };
+  }
+  return { ok: true, draft: { site, names, area: input.area } };
 }
 
 /** Header names are not case sensitive; Conduit keeps them in lower case. */

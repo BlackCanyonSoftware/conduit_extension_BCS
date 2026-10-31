@@ -9,6 +9,7 @@ import {
   permissionPatterns,
 } from '../core/sinks/host';
 import { sinkTarget, type Sink, type Want } from '../core/sinks/types';
+import { ruleFieldsFor } from '../core/sinks/want';
 import { requestSiteAccess } from '../platform/cookies';
 import { requestDiscard, requestRetry } from '../platform/extension';
 import { fetchHandshake, probeLoopback } from '../platform/sinks';
@@ -65,8 +66,7 @@ export function mountSinks(root: HTMLElement): SinksView {
   function wantSentence(sink: Sink, want: Want): string {
     return describeRule(
       {
-        ...(want.kind === 'header' ? { kind: 'header' as const } : {}),
-        ...(want.direction === undefined ? {} : { direction: want.direction }),
+        ...ruleFieldsFor(want),
         site: want.site ?? '',
         names: want.names,
         destination: { kind: 'sink', sinkId: sink.id, wantId: want.id },
@@ -485,8 +485,7 @@ export function mountSinks(root: HTMLElement): SinksView {
           const now = new Date().toISOString();
           const rules: Rule[] = approve.map((want) => ({
             id: crypto.randomUUID(),
-            kind: want.kind === 'header' ? 'header' : 'cookie',
-            ...(want.kind === 'header' ? { direction: want.direction ?? 'request' } : {}),
+            ...ruleFieldsFor(want),
             site: want.site ?? '',
             names: want.names,
             destination: { kind: 'sink', sinkId: sink.id, wantId: want.id },

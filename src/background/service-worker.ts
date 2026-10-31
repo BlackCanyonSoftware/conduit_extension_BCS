@@ -5,7 +5,9 @@ import {
   observedCookies,
   type Observed,
 } from '../core/capture';
+import { patternsForSite } from '../core/cookies/site';
 import { matchRuleHeaders, type HeaderObservation } from '../core/headers';
+import { matchRuleStorage, storageNeeds } from '../core/page-storage';
 import { ruleStatus, type Rule } from '../core/rules/types';
 import {
   afterFailure,
@@ -22,6 +24,7 @@ import { sinkTarget, type Sink } from '../core/sinks/types';
 import { onDeliveryWake, setDeliveryWake } from '../platform/alarms';
 import { fromChromeCookie, getSiteCookies } from '../platform/cookies';
 import { onHeaders } from '../platform/headers';
+import { onPageLoaded, readPageStorage, tabsOnSites } from '../platform/page-storage';
 import { SinkError, postDelivery } from '../platform/sinks';
 import {
   loadRulesAndSwitch,
@@ -48,6 +51,9 @@ function inOrder<T>(task: () => Promise<T>): Promise<T> {
   pending = run.catch(() => undefined);
   return run;
 }
+
+/** "Capture now" for a storage rule looks at this many open tabs on the site, at most. */
+const MAX_TABS_READ = 10;
 
 function context(): { now: number; newId: () => string } {
   return { now: Date.now(), newId: () => crypto.randomUUID() };
@@ -152,46 +158,53 @@ async function handleCookieChange(cookie: chrome.cookies.Cookie): Promise<void> 
   if (queued > 0) await processDue();
 }
 
-// Header rules look at every request to a site the person has allowed, so the cheap part runs
-// first: the rules are read from storage once and kept until they change.
-let headerRules: Promise<Rule[]> | undefined;
+// Header and storage rules react to browsing (every request, every page load), so the cheap
+// part runs first: the rules are read from storage once and kept until they change.
+let watchRules: Promise<Rule[]> | undefined;
 
-function activeHeaderRules(): Promise<Rule[]> {
-  headerRules ??= loadRulesAndSwitch().then(({ rules, killSwitch }) =>
-    rules.filter((rule) => rule.kind === 'header' && isCapturing(rule, killSwitch)),
+function activeWatchRules(): Promise<Rule[]> {
+  watchRules ??= loadRulesAndSwitch().then(({ rules, killSwitch }) =>
+    rules.filter((rule) => rule.kind !== 'cookie' && isCapturing(rule, killSwitch)),
   );
-  return headerRules;
+  return watchRules;
 }
 
-/** Headers were sent or received: save or send the ones an active header rule names. */
-async function handleHeaders(observation: HeaderObservation): Promise<void> {
-  const rules = (await activeHeaderRules()).filter(
-    (rule) => matchRuleHeaders(rule, observation).length > 0,
-  );
-  if (rules.length === 0) return;
-
+/** Saves or sends what these active rules picked out of something the browser did. */
+async function recordObserved(rules: Rule[], match: (rule: Rule) => Observed[]): Promise<void> {
   const state = await loadState();
   let log = state.log;
   let logged = false;
   for (const rule of rules) {
     const current = state.rules.find((candidate) => candidate.id === rule.id);
     if (current?.destination.kind !== 'log' || !isCapturing(current, state.killSwitch)) continue;
-    const created = capturesForObserved(
-      current,
-      matchRuleHeaders(current, observation),
-      log,
-      logContext(),
-    );
+    const created = capturesForObserved(current, match(current), log, logContext());
     if (created.length === 0) continue;
     log = appendCapture(log, created);
     logged = true;
   }
   if (logged) await saveLog(log);
 
-  const queued = await queueForSinks(state, (rule) => matchRuleHeaders(rule, observation), {
-    force: false,
-  });
-  if (queued > 0) await processDue();
+  if ((await queueForSinks(state, match, { force: false })) > 0) await processDue();
+}
+
+/** Headers were sent or received: save or send the ones an active header rule names. */
+async function handleHeaders(observation: HeaderObservation): Promise<void> {
+  const rules = (await activeWatchRules()).filter(
+    (rule) => matchRuleHeaders(rule, observation).length > 0,
+  );
+  if (rules.length > 0) await recordObserved(rules, (rule) => matchRuleHeaders(rule, observation));
+}
+
+/** A page finished loading: read the storage keys the rules for its site name, and nothing else. */
+async function handlePageLoaded(tabId: number, url: string): Promise<void> {
+  const watching = await activeWatchRules();
+  for (const need of storageNeeds(watching, url)) {
+    const observation = await readPageStorage(tabId, need.area, need.keys);
+    if (!observation) continue;
+    const rules = watching.filter((rule) => matchRuleStorage(rule, observation).length > 0);
+    if (rules.length > 0)
+      await recordObserved(rules, (rule) => matchRuleStorage(rule, observation));
+  }
 }
 
 /** The outcome of one try: the queue and delivery log after it. */
@@ -281,16 +294,30 @@ async function captureNow(ruleId: string): Promise<WorkerResponse> {
       reason: 'A header rule captures while pages load, so there is nothing to run now.',
     };
   }
-  const cookies = await getSiteCookies(rule.site);
+  let observed: Observed[];
+  if (rule.kind === 'storage') {
+    const tabs = await tabsOnSites(patternsForSite(rule.site));
+    if (tabs.length === 0) {
+      return { ok: false, reason: `Open a page on ${rule.site} first, then run the rule again.` };
+    }
+    const found = new Map<string, Observed>();
+    for (const tab of tabs.slice(0, MAX_TABS_READ)) {
+      const observation = await readPageStorage(tab.id, rule.area ?? 'local', rule.names);
+      if (!observation) continue;
+      for (const item of matchRuleStorage(rule, observation)) {
+        found.set(`${item.origin} ${item.name} ${item.value}`, item);
+      }
+    }
+    observed = [...found.values()];
+  } else {
+    observed = observedCookies(rule, await getSiteCookies(rule.site));
+  }
   if (rule.destination.kind === 'sink') {
-    const count = await queueForSinks(state, (item) => observedCookies(item, cookies), {
-      force: true,
-      onlyRule: rule.id,
-    });
+    const count = await queueForSinks(state, () => observed, { force: true, onlyRule: rule.id });
     if (count > 0) await processDue();
     return { ok: true, count };
   }
-  const created = capturesFor(rule, cookies, state.log, logContext());
+  const created = capturesForObserved(rule, observed, state.log, logContext());
   if (created.length > 0) await saveLog(appendCapture(state.log, created));
   return { ok: true, count: created.length };
 }
@@ -350,6 +377,12 @@ onHeaders((observation) => {
   });
 });
 
+onPageLoaded((tabId, url) => {
+  inOrder(() => handlePageLoaded(tabId, url)).catch((error: unknown) => {
+    console.error('Could not read page storage', error);
+  });
+});
+
 onDeliveryWake(() => {
   inOrder(processDue).catch((error: unknown) => {
     console.error('Could not process deliveries', error);
@@ -382,7 +415,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
 });
 
 onStateChanged((changed) => {
-  if (changed.includes('rules') || changed.includes('killSwitch')) headerRules = undefined;
+  if (changed.includes('rules') || changed.includes('killSwitch')) watchRules = undefined;
   if (changed.includes('killSwitch') || changed.includes('queue')) refreshBadge();
   if (changed.includes('killSwitch')) {
     // Resuming sends what is due; pausing needs nothing, because processDue checks the switch.

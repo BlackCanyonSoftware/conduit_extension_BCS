@@ -7,6 +7,8 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Storage reads: a rule can capture named localStorage or sessionStorage keys from a site, read when a page finishes loading and on "Capture now". Only the keys you name are read.
+- Extractors: any rule can keep only part of a value, what a pattern matches or one field of JSON, so a log or an app receives just that part. The rule's sentence says what is kept. Apps can ask for storage keys and extractors in their handshake.
 - Header capture: a rule can capture named request or response headers from a site, with the same approval, switch, log and delivery to apps as a cookie rule. Only the headers you name are read; everything else in the request is left alone. Apps can ask for headers in their handshake.
 - Project scaffolding: TypeScript, esbuild build, Vitest, ESLint, Prettier, CI workflow.
 - Local apps: add a program that receives values from Conduit by its address, or let Conduit look on this computer. The app tells Conduit what it would like and why; you approve the requests you choose and each becomes a rule. Apps on other computers must use https and you confirm them by typing their name. An app can have its own delivery path.

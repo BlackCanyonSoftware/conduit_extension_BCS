@@ -108,7 +108,7 @@ describe('US-007: importing rules', () => {
     ['no Conduit marker', JSON.stringify({ rules: [] }), /not a Conduit rules file/],
     ['a newer file version', file([], { conduit: 2 }), /version/],
     ['rules that are not a list', file('x'), /list of rules/],
-    ['an unknown kind', file([{ ...validRule, kind: 'storage' }]), /Rule 1.*kind/],
+    ['an unknown kind', file([{ ...validRule, kind: 'indexeddb' }]), /Rule 1.*kind/],
     ['a bad site', file([validRule, { ...validRule, site: 'not a site' }]), /Rule 2.*site/],
     ['no names', file([{ ...validRule, names: [] }]), /Rule 1.*cookie name/],
     ['a bad name', file([{ ...validRule, names: ['a=b'] }]), /Rule 1.*cookie name/],

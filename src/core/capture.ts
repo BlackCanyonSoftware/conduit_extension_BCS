@@ -1,4 +1,5 @@
 import type { Cookie } from './cookies/types';
+import { extractFrom } from './extract';
 import { isRecord } from './records';
 import { describeRule } from './rules/describe';
 import type { Rule } from './rules/types';
@@ -49,11 +50,14 @@ export interface Observed {
 
 /** The cookies a rule names, in the shape shared with header captures. */
 export function observedCookies(rule: Rule, cookies: readonly Cookie[]): Observed[] {
-  return matchRuleCookies(rule, cookies).map((cookie) => ({
-    name: cookie.name,
-    value: cookie.value,
-    origin: cookieOrigin(cookie),
-  }));
+  return extractFrom(
+    rule,
+    matchRuleCookies(rule, cookies).map((cookie) => ({
+      name: cookie.name,
+      value: cookie.value,
+      origin: cookieOrigin(cookie),
+    })),
+  );
 }
 
 /** The size of a capture: the UTF-8 length of its data as JSON. */

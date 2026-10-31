@@ -1,3 +1,4 @@
+import { describeExtractor } from '../extract';
 import { sinkTarget, type Sink } from '../sinks/types';
 import type { Rule } from './types';
 
@@ -11,17 +12,19 @@ function joinNames(names: readonly string[]): string {
  * Pass the app a rule sends to; an app on another computer is named as such.
  */
 export function describeRule(
-  rule: Pick<Rule, 'names' | 'site' | 'destination'> & Partial<Pick<Rule, 'kind' | 'direction'>>,
+  rule: Pick<Rule, 'names' | 'site' | 'destination'> &
+    Partial<Pick<Rule, 'kind' | 'direction' | 'area' | 'extract'>>,
   sink?: Pick<Sink, 'name' | 'url' | 'loopback'>,
 ): string {
   const single = rule.names.length === 1;
-  const noun =
-    rule.kind === 'header'
-      ? `${rule.direction ?? 'request'} ${single ? 'header' : 'headers'}`
-      : single
-        ? 'cookie'
-        : 'cookies';
-  const subject = `the ${noun} ${joinNames(rule.names)} from ${rule.site}`;
+  let noun = single ? 'cookie' : 'cookies';
+  if (rule.kind === 'header') {
+    noun = `${rule.direction ?? 'request'} ${single ? 'header' : 'headers'}`;
+  } else if (rule.kind === 'storage') {
+    noun = `${rule.area === 'session' ? 'sessionStorage' : 'localStorage'} ${single ? 'key' : 'keys'}`;
+  }
+  const keeping = rule.extract ? `, keeping only ${describeExtractor(rule.extract)},` : '';
+  const subject = `the ${noun} ${joinNames(rule.names)} from ${rule.site}${keeping}`;
   if (rule.destination.kind === 'log') return `Save ${subject} to Conduit's local log.`;
   if (!sink) return `Send ${subject} to an app that is no longer set up.`;
   const away = sink.loopback ? '' : ', which is not on this computer';

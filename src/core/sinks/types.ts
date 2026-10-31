@@ -1,4 +1,5 @@
-import type { HeaderDirection } from '../rules/types';
+import type { Extractor } from '../extract';
+import type { HeaderDirection, StorageArea } from '../rules/types';
 
 export type WantKind = 'cookie' | 'header' | 'storage';
 
@@ -13,6 +14,10 @@ export interface Want {
   names: string[];
   /** For a header request: request or response headers. */
   direction?: HeaderDirection;
+  /** For a storage request: localStorage or sessionStorage. */
+  area?: StorageArea;
+  /** Keep only part of each value before it is delivered. */
+  extract?: Extractor;
   /** The app's reason, shown to the person word for word. */
   why: string;
   /** The main domain the request covers, worked out from `origin`. */

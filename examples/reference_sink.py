@@ -10,6 +10,7 @@ Run it, then in Conduit's rules page choose "Add app" and enter its address:
 
     python examples/reference_sink.py --site example.com --names sid
     python examples/reference_sink.py --site example.com --kind header --names x-api-key
+    python examples/reference_sink.py --site example.com --kind storage --names session --json-path "$.token"
 
 It listens on this computer only. It prints the names and sizes of what it
 receives, never the values, because values are secrets.
@@ -32,6 +33,12 @@ def make_handler(args):
     }
     if args.kind == "header":
         want["direction"] = args.direction
+    if args.kind == "storage":
+        want["area"] = args.area
+    if args.json_path:
+        want["extract"] = {"type": "jsonpath", "path": args.json_path}
+    elif args.pattern:
+        want["extract"] = {"type": "regex", "pattern": args.pattern}
     wants = [want]
     failures_left = [args.fail_first]
 
@@ -86,7 +93,10 @@ def main():
     parser.add_argument("--name", default="Reference app", help="name shown in Conduit")
     parser.add_argument("--site", default="example.com", help="site whose data to ask for")
     parser.add_argument(
-        "--kind", choices=["cookie", "header"], default="cookie", help="what to ask for"
+        "--kind",
+        choices=["cookie", "header", "storage"],
+        default="cookie",
+        help="what to ask for",
     )
     parser.add_argument(
         "--direction",
@@ -94,6 +104,14 @@ def main():
         default="request",
         help="for headers: the ones the browser sends or the ones it gets back",
     )
+    parser.add_argument(
+        "--area",
+        choices=["local", "session"],
+        default="local",
+        help="for storage: localStorage or sessionStorage",
+    )
+    parser.add_argument("--json-path", help="ask for only this field of a JSON value, such as $.token")
+    parser.add_argument("--pattern", help="ask for only what this regular expression matches")
     parser.add_argument("--names", nargs="+", default=["sid"], help="cookie or header names to ask for")
     parser.add_argument("--want-id", default="session", help="id of the request")
     parser.add_argument(

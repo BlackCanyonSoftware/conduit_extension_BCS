@@ -1,6 +1,8 @@
 import { isRecord } from '../records';
-import type { Destination, HeaderDirection, Rule } from './types';
-import { checkHeaderNames, checkNames, normalizeSite } from './validate';
+import type { Extractor } from '../extract';
+import { readExtractor } from '../extract';
+import type { Destination, HeaderDirection, Rule, StorageArea } from './types';
+import { checkHeaderNames, checkNames, checkStorageKeys, normalizeSite } from './validate';
 
 /** Thrown when a rules file cannot be imported. The message says what to fix. */
 export class RuleImportError extends Error {
@@ -11,7 +13,12 @@ const FILE_VERSION = 1;
 const MAX_FILE_CHARACTERS = 1_000_000;
 const MAX_RULES = 200;
 
-type Definition = Pick<Rule, 'kind' | 'site' | 'names' | 'destination' | 'direction'>;
+type Definition = Pick<
+  Rule,
+  'kind' | 'site' | 'names' | 'destination' | 'direction' | 'area' | 'extract'
+>;
+
+const NAME_WORD = { cookie: 'cookie', header: 'header', storage: 'storage key' } as const;
 
 /**
  * Writes the rules' definitions as a file. Approval and on/off state are never shared.
@@ -23,6 +30,8 @@ export function exportRules(rules: readonly Rule[]): { text: string; skipped: nu
   const definitions: Definition[] = shareable.map((rule) => ({
     kind: rule.kind,
     ...(rule.direction === undefined ? {} : { direction: rule.direction }),
+    ...(rule.area === undefined ? {} : { area: rule.area }),
+    ...(rule.extract === undefined ? {} : { extract: rule.extract }),
     site: rule.site,
     names: [...rule.names],
     destination: { kind: 'log' },
@@ -56,41 +65,60 @@ function readDefinition(
   allowSink: boolean,
 ): { definition: Definition } | { problem: string } {
   if (!isRecord(raw)) return { problem: 'it is not a rule.' };
-  if (raw.kind !== 'cookie' && raw.kind !== 'header') {
-    return { problem: 'the kind must be "cookie" or "header".' };
+  const { kind } = raw;
+  if (kind !== 'cookie' && kind !== 'header' && kind !== 'storage') {
+    return { problem: 'the kind must be "cookie", "header" or "storage".' };
   }
-  const isHeader = raw.kind === 'header';
 
   const site = typeof raw.site === 'string' ? normalizeSite(raw.site) : undefined;
   if (site === undefined) return { problem: 'the site is not a website address.' };
 
   let direction: HeaderDirection | undefined;
-  if (isHeader) {
+  if (kind === 'header') {
     if (raw.direction !== 'request' && raw.direction !== 'response') {
       return { problem: 'a header rule needs a direction, "request" or "response".' };
     }
     direction = raw.direction;
   }
+  let area: StorageArea | undefined;
+  if (kind === 'storage') {
+    if (raw.area !== 'local' && raw.area !== 'session') {
+      return { problem: 'a storage rule needs an area, "local" or "session".' };
+    }
+    area = raw.area;
+  }
 
   const names = raw.names;
   if (!Array.isArray(names) || !names.every((name): name is string => typeof name === 'string')) {
-    return { problem: `the ${isHeader ? 'header' : 'cookie'} names must be a list of text.` };
+    return { problem: `the ${NAME_WORD[kind]} names must be a list of text.` };
   }
-  const namesProblem = isHeader ? checkHeaderNames(names) : checkNames(names);
+  const namesProblem =
+    kind === 'header'
+      ? checkHeaderNames(names)
+      : kind === 'storage'
+        ? checkStorageKeys(names)
+        : checkNames(names);
   if (namesProblem) return { problem: namesProblem };
+
+  let extract: Extractor | undefined;
+  if (raw.extract !== undefined) {
+    const read = readExtractor(raw.extract);
+    if (!read.ok) return { problem: read.problem };
+    extract = read.extractor;
+  }
 
   const destination = readDestination(raw.destination, allowSink);
   if (!destination) return { problem: "the destination must be Conduit's local log." };
   return {
-    definition: isHeader
-      ? {
-          kind: 'header',
-          ...(direction === undefined ? {} : { direction }),
-          site,
-          names: [...new Set(names.map((name) => name.toLowerCase()))],
-          destination,
-        }
-      : { kind: 'cookie', site, names: [...names], destination },
+    definition: {
+      kind,
+      ...(direction === undefined ? {} : { direction }),
+      ...(area === undefined ? {} : { area }),
+      ...(extract === undefined ? {} : { extract }),
+      site,
+      names: kind === 'header' ? [...new Set(names.map((name) => name.toLowerCase()))] : [...names],
+      destination,
+    },
   };
 }
 

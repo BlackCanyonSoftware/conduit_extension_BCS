@@ -1,6 +1,6 @@
 import { isRecord } from '../records';
-import type { HeaderDirection } from '../rules/types';
-import { checkHeaderNames, checkNames, normalizeSite } from '../rules/validate';
+import { readExtractor } from '../extract';
+import { checkHeaderNames, checkNames, checkStorageKeys, normalizeSite } from '../rules/validate';
 import type { Want } from './types';
 
 export type ParsedHandshake =
@@ -10,9 +10,6 @@ const MAX_NAME_LENGTH = 80;
 const MAX_WHY_LENGTH = 500;
 const MAX_WANTS = 50;
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
-
-// A Map, not an object: the kind comes from the app, and a name like "constructor" must not match.
-const UNSUPPORTED_KIND = new Map([['storage', 'Requests for page storage are not supported yet.']]);
 
 /** Control characters become spaces, so an app cannot garble the screen with its name. */
 function printable(text: string): string {
@@ -52,20 +49,30 @@ function readWant(raw: unknown, index: number, seenIds: Set<string>): Want {
   if (seenIds.has(id)) return { ...want, problem: 'Another request already uses this id.' };
   seenIds.add(id);
 
-  if (kind !== 'cookie' && kind !== 'header') {
-    return {
-      ...want,
-      problem: UNSUPPORTED_KIND.get(kind) ?? 'This kind of request is not supported.',
-    };
+  if (kind !== 'cookie' && kind !== 'header' && kind !== 'storage') {
+    return { ...want, problem: 'This kind of request is not supported.' };
   }
-  const isHeader = kind === 'header';
-  const direction = record.direction ?? 'request';
-  if (isHeader && direction !== 'request' && direction !== 'response') {
-    return { ...want, problem: 'The direction must be "request" or "response".' };
-  }
-  if (isHeader) {
-    want.direction = direction as HeaderDirection;
+  if (kind === 'header') {
+    const direction = record.direction ?? 'request';
+    if (direction !== 'request' && direction !== 'response') {
+      return { ...want, problem: 'The direction must be "request" or "response".' };
+    }
+    want.direction = direction;
     want.names = [...new Set(names.map((name) => name.toLowerCase()))];
+  }
+  if (kind === 'storage') {
+    const area = record.area ?? 'local';
+    if (area !== 'local' && area !== 'session') {
+      return { ...want, problem: 'The storage area must be "local" or "session".' };
+    }
+    want.area = area;
+  }
+  if (record.extract !== undefined) {
+    const read = readExtractor(record.extract);
+    if (!read.ok) {
+      return { ...want, problem: `The ${read.problem.replace(/^the /, '')}` };
+    }
+    want.extract = read.extractor;
   }
   if (why.trim() === '') {
     return {
@@ -83,7 +90,12 @@ function readWant(raw: unknown, index: number, seenIds: Set<string>): Want {
   if (site === undefined) {
     return { ...want, problem: 'The site in this request is not a website address.' };
   }
-  const namesProblem = isHeader ? checkHeaderNames(want.names) : checkNames(names);
+  const namesProblem =
+    kind === 'header'
+      ? checkHeaderNames(want.names)
+      : kind === 'storage'
+        ? checkStorageKeys(names)
+        : checkNames(names);
   if (namesProblem) return { ...want, site, problem: namesProblem };
   return { ...want, site };
 }

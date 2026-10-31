@@ -1,8 +1,20 @@
 import { patternsForSite } from '../core/cookies/site';
 import { describeRule } from '../core/rules/describe';
 import { exportRules, importRules, RuleImportError } from '../core/rules/transfer';
-import { ruleStatus, type HeaderDirection, type Rule, type RuleStatus } from '../core/rules/types';
-import { parseHeaderRuleDraft, parseRuleDraft, type RuleDraft } from '../core/rules/validate';
+import { parseExtractorInput, type Extractor, type ExtractorChoice } from '../core/extract';
+import {
+  ruleStatus,
+  type HeaderDirection,
+  type Rule,
+  type RuleStatus,
+  type StorageArea,
+} from '../core/rules/types';
+import {
+  parseHeaderRuleDraft,
+  parseRuleDraft,
+  parseStorageRuleDraft,
+  type RuleDraft,
+} from '../core/rules/validate';
 import { requestSiteAccess } from '../platform/cookies';
 import { requestCaptureNow, requestDiscard } from '../platform/extension';
 import { saveKillSwitch, saveRules, type StoredState } from '../platform/storage';
@@ -16,23 +28,109 @@ const STATUS_BADGE: Record<RuleStatus, { label: string; className: string }> = {
   'needs-approval': { label: 'Needs approval', className: 'badge warn' },
 };
 
-/** What the new-rule form can capture: cookies, or the headers of requests or responses. */
-type CaptureChoice = 'cookie' | HeaderDirection;
+/** What the new-rule form can capture: cookies, headers of requests or responses, or page storage. */
+type CaptureChoice = 'cookie' | HeaderDirection | StorageArea;
 
 const CAPTURE_LABELS: Record<CaptureChoice, string> = {
   cookie: 'Cookies',
   request: 'Request headers (sent by the browser)',
   response: 'Response headers (received by the browser)',
+  local: 'Page storage (localStorage)',
+  session: 'Page storage (sessionStorage)',
 };
+
+const NAMES_TEXT = {
+  cookie: {
+    label: 'Cookie names',
+    hint: 'Separate names with commas or spaces.',
+    example: 'sid, theme',
+  },
+  header: {
+    label: 'Header names',
+    hint: 'Separate names with commas or spaces. Only the headers you name are read.',
+    example: 'authorization, x-api-key',
+  },
+  storage: {
+    label: 'Storage keys',
+    hint: 'Separate keys with commas or spaces. Keys are case sensitive. They are read when a page finishes loading, and when you press Capture now.',
+    example: 'token, user',
+  },
+} as const;
+
+const EXTRACT_LABELS: Record<ExtractorChoice, string> = {
+  none: 'The whole value',
+  regex: 'Only what a pattern matches',
+  jsonpath: 'Only one field of JSON',
+};
+
+const EXTRACT_TEXT = {
+  regex: {
+    label: 'Pattern',
+    hint: 'A regular expression, for example id=(\\d+). If it has a group in brackets, only the first group is kept.',
+    example: 'id=(\\d+)',
+  },
+  jsonpath: {
+    label: 'Path',
+    hint: 'Where the field is, for example $.user.token or $.items[0].id.',
+    example: '$.user.token',
+  },
+} as const;
 
 interface FormValues {
   site: string;
   names: string;
   capture: CaptureChoice;
+  extractType: ExtractorChoice;
+  extractText: string;
 }
 
-type ReviewDraft =
-  (RuleDraft & { kind: 'cookie' }) | (RuleDraft & { kind: 'header'; direction: HeaderDirection });
+interface FormErrors {
+  site?: string;
+  names?: string;
+  extract?: string;
+}
+
+type DraftBase = RuleDraft &
+  (
+    | { kind: 'cookie' }
+    | { kind: 'header'; direction: HeaderDirection }
+    | { kind: 'storage'; area: StorageArea }
+  );
+
+type ReviewDraft = DraftBase & { extract?: Extractor };
+
+type FormResult = { ok: true; draft: DraftBase } | { ok: false; errors: FormErrors };
+
+/** Checks what was typed for the chosen kind of rule. */
+function readForm(typed: FormValues): FormResult {
+  const choice = typed.capture;
+  if (choice === 'cookie') {
+    const result = parseRuleDraft(typed);
+    return result.ok ? { ok: true, draft: { ...result.draft, kind: 'cookie' } } : result;
+  }
+  if (choice === 'request' || choice === 'response') {
+    const result = parseHeaderRuleDraft({ ...typed, direction: choice });
+    return result.ok
+      ? { ok: true, draft: { ...result.draft, kind: 'header', direction: choice } }
+      : result;
+  }
+  const result = parseStorageRuleDraft({ ...typed, area: choice });
+  return result.ok
+    ? { ok: true, draft: { ...result.draft, kind: 'storage', area: choice } }
+    : result;
+}
+
+/** The kind of rule a choice in the form makes. */
+function kindOf(choice: CaptureChoice): 'cookie' | 'header' | 'storage' {
+  if (choice === 'cookie') return 'cookie';
+  return choice === 'request' || choice === 'response' ? 'header' : 'storage';
+}
+
+/** What the browser's access prompt is for, in the approval panel's words. */
+function accessNoun(kind: Rule['kind']): 'cookies' | 'headers' | 'page storage' {
+  if (kind === 'header') return 'headers';
+  return kind === 'storage' ? 'page storage' : 'cookies';
+}
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -81,7 +179,7 @@ export function mountRules(root: HTMLElement): RulesView {
   });
 
   newRule.addEventListener('click', () => {
-    showForm({ site: '', names: '', capture: 'cookie' }, {});
+    showForm({ site: '', names: '', capture: 'cookie', extractType: 'none', extractText: '' }, {});
   });
   importButton.addEventListener('click', () => {
     fileInput.click();
@@ -136,7 +234,7 @@ export function mountRules(root: HTMLElement): RulesView {
   function approvalPanel(options: {
     text: string;
     site: string;
-    noun: 'cookies' | 'headers';
+    noun: 'cookies' | 'headers' | 'page storage';
     confirm: string;
     onApprove: () => Promise<void>;
     onBack: (() => void) | undefined;
@@ -191,7 +289,7 @@ export function mountRules(root: HTMLElement): RulesView {
     );
   }
 
-  function showForm(values: FormValues, errors: { site?: string; names?: string }): void {
+  function showForm(values: FormValues, errors: FormErrors): void {
     const capture = h(
       'select',
       { class: 'input', attrs: { id: 'rule-capture' } },
@@ -227,15 +325,62 @@ export function mountRules(root: HTMLElement): RulesView {
     names.value = values.names;
     const namesHint = h('span', { class: 'hint', attrs: { id: 'rule-names-hint' } });
     const describeNames = (): void => {
-      const headers = capture.value !== 'cookie';
-      namesLabel.textContent = headers ? 'Header names' : 'Cookie names';
-      namesHint.textContent = headers
-        ? 'Separate names with commas or spaces. Only the headers you name are read.'
-        : 'Separate names with commas or spaces.';
-      names.placeholder = headers ? 'authorization, x-api-key' : 'sid, theme';
+      const text = NAMES_TEXT[kindOf(capture.value as CaptureChoice)];
+      namesLabel.textContent = text.label;
+      namesHint.textContent = text.hint;
+      names.placeholder = text.example;
     };
     describeNames();
     capture.addEventListener('change', describeNames);
+
+    const extractType = h(
+      'select',
+      { class: 'input', attrs: { id: 'rule-extract-type' } },
+      ...(Object.entries(EXTRACT_LABELS) as [ExtractorChoice, string][]).map(([value, label]) =>
+        h('option', { attrs: { value } }, label),
+      ),
+    );
+    extractType.value = values.extractType;
+    const extractText = h('input', {
+      class: 'input',
+      attrs: {
+        id: 'rule-extract',
+        type: 'text',
+        autocomplete: 'off',
+        spellcheck: 'false',
+        'aria-describedby': 'rule-extract-hint rule-extract-error',
+      },
+    });
+    extractText.value = values.extractText;
+    const extractLabel = h('label', { class: 'label', attrs: { for: 'rule-extract' } });
+    const extractHint = h('span', { class: 'hint', attrs: { id: 'rule-extract-hint' } });
+    const extractError = h('p', {
+      class: 'field-error',
+      attrs: { id: 'rule-extract-error', role: 'alert' },
+    });
+    const extractField = h(
+      'div',
+      { class: 'field' },
+      extractLabel,
+      extractText,
+      extractHint,
+      extractError,
+    );
+    const describeExtract = (): void => {
+      const choice = extractType.value as ExtractorChoice;
+      extractField.hidden = choice === 'none';
+      if (choice === 'none') return;
+      const text = EXTRACT_TEXT[choice];
+      extractLabel.textContent = text.label;
+      extractHint.textContent = text.hint;
+      extractText.placeholder = text.example;
+    };
+    describeExtract();
+    extractType.addEventListener('change', describeExtract);
+    if (errors.extract) {
+      extractError.replaceChildren(icon('error'), errors.extract);
+      extractText.setAttribute('aria-invalid', 'true');
+    }
     const siteError = h('p', {
       class: 'field-error',
       attrs: { id: 'rule-site-error', role: 'alert' },
@@ -281,6 +426,13 @@ export function mountRules(root: HTMLElement): RulesView {
         h('div', { class: 'field' }, namesLabel, names, namesHint, namesError),
         h(
           'div',
+          { class: 'field' },
+          h('label', { class: 'label', attrs: { for: 'rule-extract-type' } }, 'Keep'),
+          extractType,
+        ),
+        extractField,
+        h(
+          'div',
           { class: 'form-actions' },
           h('button', { class: 'btn primary', attrs: { type: 'submit' } }, 'Review rule'),
           h(
@@ -302,17 +454,30 @@ export function mountRules(root: HTMLElement): RulesView {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       const choice = capture.value as CaptureChoice;
-      const typed = { site: site.value, names: names.value, capture: choice };
-      const result =
-        choice === 'cookie'
-          ? parseRuleDraft(typed)
-          : parseHeaderRuleDraft({ ...typed, direction: choice });
-      if (!result.ok) showForm(typed, result.errors);
-      else if (choice === 'cookie') showReview({ ...result.draft, kind: 'cookie' });
-      else showReview({ ...result.draft, kind: 'header', direction: choice });
+      const typed: FormValues = {
+        site: site.value,
+        names: names.value,
+        capture: choice,
+        extractType: extractType.value as ExtractorChoice,
+        extractText: extractText.value,
+      };
+      const result = readForm(typed);
+      const extract = parseExtractorInput(typed.extractType, typed.extractText);
+      if (!result.ok || !extract.ok) {
+        showForm(typed, {
+          ...(result.ok ? {} : result.errors),
+          ...(extract.ok ? {} : { extract: extract.error }),
+        });
+        return;
+      }
+      showReview({
+        ...result.draft,
+        ...(extract.extractor === undefined ? {} : { extract: extract.extractor }),
+      });
     });
     formRegion.replaceChildren(form);
-    (errors.names && !errors.site ? names : site).focus();
+    const first = errors.site ? site : errors.names ? names : errors.extract ? extractText : site;
+    first.focus();
   }
 
   function showReview(draft: ReviewDraft): void {
@@ -320,7 +485,7 @@ export function mountRules(root: HTMLElement): RulesView {
     const panel = approvalPanel({
       text,
       site: draft.site,
-      noun: draft.kind === 'header' ? 'headers' : 'cookies',
+      noun: accessNoun(draft.kind),
       confirm: 'Approve and save',
       onApprove: async () => {
         const now = new Date().toISOString();
@@ -328,6 +493,8 @@ export function mountRules(root: HTMLElement): RulesView {
           id: crypto.randomUUID(),
           kind: draft.kind,
           ...(draft.kind === 'header' ? { direction: draft.direction } : {}),
+          ...(draft.kind === 'storage' ? { area: draft.area } : {}),
+          ...(draft.extract === undefined ? {} : { extract: draft.extract }),
           site: draft.site,
           names: draft.names,
           destination: { kind: 'log' },
@@ -344,7 +511,19 @@ export function mountRules(root: HTMLElement): RulesView {
           {
             site: draft.site,
             names: draft.names.join(', '),
-            capture: draft.kind === 'header' ? draft.direction : 'cookie',
+            capture:
+              draft.kind === 'header'
+                ? draft.direction
+                : draft.kind === 'storage'
+                  ? draft.area
+                  : 'cookie',
+            extractType: draft.extract?.type ?? 'none',
+            extractText:
+              draft.extract === undefined
+                ? ''
+                : draft.extract.type === 'regex'
+                  ? draft.extract.pattern
+                  : draft.extract.path,
           },
           {},
         );
@@ -400,7 +579,7 @@ export function mountRules(root: HTMLElement): RulesView {
         ),
       );
     }
-    if (state === 'active' && rule.kind === 'cookie') {
+    if (state === 'active' && rule.kind !== 'header') {
       actions.append(
         h(
           'button',
@@ -417,7 +596,7 @@ export function mountRules(root: HTMLElement): RulesView {
                       status.textContent = reply.reason;
                     } else if (reply.count === 0) {
                       status.textContent = sends
-                        ? 'Nothing to send: the rule found no matching cookies.'
+                        ? 'Nothing to send: the rule found no matching values.'
                         : 'Nothing new to capture: the values have not changed.';
                     } else {
                       const noun = reply.count === 1 ? 'value' : 'values';
@@ -511,7 +690,7 @@ export function mountRules(root: HTMLElement): RulesView {
           approvalPanel({
             text: sentence(rule),
             site: rule.site,
-            noun: rule.kind === 'header' ? 'headers' : 'cookies',
+            noun: accessNoun(rule.kind),
             confirm: 'Approve and switch on',
             onApprove: async () => {
               const now = new Date().toISOString();

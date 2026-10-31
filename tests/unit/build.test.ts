@@ -5,7 +5,14 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 // Permissions Conduit is planned to use (docs/PRD.md, non-functional requirements).
-const ALLOWED_PERMISSIONS = new Set(['activeTab', 'cookies', 'webRequest', 'storage', 'alarms']);
+const ALLOWED_PERMISSIONS = new Set([
+  'activeTab',
+  'cookies',
+  'webRequest',
+  'storage',
+  'alarms',
+  'scripting',
+]);
 
 interface Manifest {
   manifest_version: number;

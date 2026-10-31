@@ -354,8 +354,8 @@ test.describe('apps that receive captures (US-008 to US-011)', () => {
     (testSink.handshake.wants as unknown[]).push(
       { id: 'no-reason', kind: 'cookie', origin: 'http://localhost', names: ['token'] },
       {
-        id: 'storage',
-        kind: 'storage',
+        id: 'indexeddb',
+        kind: 'indexeddb',
         origin: 'http://localhost',
         keys: ['X'],
         why: 'Because.',
@@ -369,11 +369,9 @@ test.describe('apps that receive captures (US-008 to US-011)', () => {
     await expect(
       requests.getByText('The app gave no reason for this request, so it cannot be approved.'),
     ).toBeVisible();
-    await expect(
-      requests.getByText('Requests for page storage are not supported yet.'),
-    ).toBeVisible();
+    await expect(requests.getByText('This kind of request is not supported.')).toBeVisible();
     await expect(requests.getByRole('checkbox', { name: 'Request no-reason' })).toBeDisabled();
-    await expect(requests.getByRole('checkbox', { name: 'Request storage' })).toBeDisabled();
+    await expect(requests.getByRole('checkbox', { name: 'Request indexeddb' })).toBeDisabled();
   });
 
   test('removing an app removes its rules, after asking', async ({ openOptions, testSink }) => {
@@ -465,17 +463,15 @@ test.describe('apps that receive captures (US-008 to US-011)', () => {
       await visit(context, `${site.url}?sid=scan-the-failure-123`);
       await expect(options.getByText('1 delivery has not gone through')).toBeVisible();
       (testSink.handshake.wants as unknown[]).push({
-        id: 'storage',
-        kind: 'storage',
+        id: 'indexeddb',
+        kind: 'indexeddb',
         origin: 'http://localhost',
         keys: ['X'],
         why: 'Because.',
       });
 
       await options.getByRole('button', { name: 'Refresh requests from Test App' }).click();
-      await expect(
-        options.getByText('Requests for page storage are not supported yet.'),
-      ).toBeVisible();
+      await expect(options.getByText('This kind of request is not supported.')).toBeVisible();
       expect(await scan(options), 'review').toEqual([]);
 
       await options.getByRole('button', { name: 'Cancel' }).click();

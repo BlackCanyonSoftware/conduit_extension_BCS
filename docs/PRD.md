@@ -169,7 +169,7 @@ Priority uses MoSCoW. Milestones are in [ROADMAP.md](ROADMAP.md).
 ## 6. Non-functional requirements
 
 - **Privacy:** no network requests other than deliveries the user approved.
-- **Permissions:** `activeTab`, `cookies`, `webRequest`, `storage`, `alarms`. Access to a site is requested at the moment the person asks for it, through `optional_host_permissions`, so a fresh install can read no site at all and `host_permissions` stays empty. See [ADR 0004](adr/0004-per-site-access.md).
+- **Permissions:** `activeTab`, `cookies`, `webRequest`, `scripting`, `storage`, `alarms`. Access to a site is requested at the moment the person asks for it, through `optional_host_permissions`, so a fresh install can read no site at all and `host_permissions` stays empty. See [ADR 0004](adr/0004-per-site-access.md).
 - **Reliability:** captures are written to extension storage immediately; delivery retries run from `chrome.alarms` and survive a service-worker restart.
 - **Accessibility:** WCAG 2.2 AA, fully keyboard operable, `prefers-reduced-motion` respected.
 - **Supply chain:** no remote code; production dependencies kept to a minimum and listed in the README.
