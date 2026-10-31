@@ -19,10 +19,9 @@ export function requestSiteAccess(patterns: string[]): Promise<boolean> {
   return chrome.permissions.request({ origins: patterns });
 }
 
-/** Every cookie the browser holds for a domain and its subdomains, including HttpOnly ones. */
-export async function getSiteCookies(domain: string): Promise<Cookie[]> {
-  const cookies = await chrome.cookies.getAll({ domain });
-  return cookies.map((cookie) => ({
+/** Converts a browser cookie to Conduit's own shape. */
+export function fromChromeCookie(cookie: chrome.cookies.Cookie): Cookie {
+  return {
     name: cookie.name,
     value: cookie.value,
     domain: cookie.domain,
@@ -34,5 +33,10 @@ export async function getSiteCookies(domain: string): Promise<Cookie[]> {
     session: cookie.session,
     ...(cookie.expirationDate === undefined ? {} : { expirationDate: cookie.expirationDate }),
     storeId: cookie.storeId,
-  }));
+  };
+}
+
+/** Every cookie the browser holds for a domain and its subdomains, including HttpOnly ones. */
+export async function getSiteCookies(domain: string): Promise<Cookie[]> {
+  return (await chrome.cookies.getAll({ domain })).map(fromChromeCookie);
 }

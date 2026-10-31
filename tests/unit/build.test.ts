@@ -12,6 +12,8 @@ interface Manifest {
   version: string;
   icons?: Record<string, string>;
   action?: { default_popup?: string; default_icon?: Record<string, string> };
+  background?: { service_worker?: string };
+  options_ui?: { page?: string };
   permissions?: string[];
   host_permissions?: string[];
   optional_host_permissions?: string[];
@@ -56,6 +58,8 @@ describe('built manifest', () => {
       ...Object.values(manifest.icons ?? {}),
       ...Object.values(manifest.action?.default_icon ?? {}),
       manifest.action?.default_popup,
+      manifest.background?.service_worker,
+      manifest.options_ui?.page,
     ].filter((file): file is string => file !== undefined);
 
     expect(referenced.length).toBeGreaterThan(0);

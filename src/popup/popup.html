@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../theme/template/base.css" />
     <link rel="stylesheet" href="../theme/template/components.css" />
     <link rel="stylesheet" href="../theme/template/layout.css" />
+    <link rel="stylesheet" href="../ui/shared.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body class="popup">
@@ -50,6 +51,7 @@
     </header>
 
     <main class="popup-main">
+      <div id="rules-bar" class="rules-bar"></div>
       <section aria-labelledby="status-title">
         <div class="popup-heading">
           <h1 id="status-title" class="popup-title">Cookies for this site</h1>
@@ -66,7 +68,7 @@
             </svg>
           </button>
         </div>
-        <div id="info-status" class="popup-info" hidden>
+        <div id="info-status" class="info-panel" hidden>
           <p>
             Conduit lists the cookies your browser holds for this site, including HttpOnly ones that
             page scripts cannot see. Choose the ones you want, then copy or download them as

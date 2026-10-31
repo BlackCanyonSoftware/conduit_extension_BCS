@@ -1,0 +1,44 @@
+/* Styles used by more than one extension page. Layout for a single page lives beside it. */
+
+/* The brand's component styles set `display`, which would otherwise beat the browser's
+   own rule for the `hidden` attribute and leave "hidden" buttons showing. */
+[hidden] {
+  display: none !important;
+}
+
+.info-panel {
+  margin-block-start: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-tint);
+  border-radius: var(--r-md);
+  background: var(--info-bg);
+  font-size: var(--fs-sm);
+}
+
+.info-panel p {
+  margin: 0;
+}
+
+.info-panel p + p {
+  margin-block-start: var(--s-2);
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--bad);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+/* Brand pairings that measure just under WCAG AA, set in `ink` instead (see docs/ROADMAP.md,
+   tech debt): inactive segmented-control labels (`mute` on `hover`, 4.31:1 light), plain
+   badges (4.02:1 dark) and ghost buttons, including hovered (`accent` on `hover`, 4.46:1 dark). */
+.seg button[aria-pressed='false'],
+.badge.plain,
+.btn.ghost,
+.btn.ghost:hover {
+  color: var(--ink);
+}

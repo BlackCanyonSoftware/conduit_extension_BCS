@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Conduit rules</title>
+    <!-- Brand sheets, in the order the brand kit requires (src/theme/BRAND.md). -->
+    <link rel="stylesheet" href="../theme/theme/theme.css" />
+    <link rel="stylesheet" href="../theme/template/tokens.css" />
+    <link rel="stylesheet" href="../theme/template/fonts.css" />
+    <link rel="stylesheet" href="../theme/template/base.css" />
+    <link rel="stylesheet" href="../theme/template/components.css" />
+    <link rel="stylesheet" href="../theme/template/layout.css" />
+    <link rel="stylesheet" href="../ui/shared.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <header class="bk-header">
+      <div class="bk-brand">
+        <img src="../theme/mark/mark.svg" alt="" width="34" height="34" class="bk-mark" />
+        <img
+          src="../theme/wordmark/wordmark-light.svg"
+          alt="Conduit"
+          width="180"
+          height="34"
+          class="bk-only-light"
+        />
+        <img
+          src="../theme/wordmark/wordmark-dark.svg"
+          alt="Conduit"
+          width="180"
+          height="34"
+          class="bk-only-dark"
+        />
+      </div>
+      <div class="bk-actions options-actions-end">
+        <button
+          class="icon-btn"
+          id="bk-theme"
+          type="button"
+          aria-pressed="false"
+          aria-label="Switch to a dark background"
+        >
+          <svg class="icon lg" aria-hidden="true" focusable="false">
+            <use class="bk-only-light" href="../theme/ui/icons.svg#i-moon"></use>
+            <use class="bk-only-dark" href="../theme/ui/icons.svg#i-sun"></use>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="options-main">
+      <section aria-labelledby="rules-title" class="options-section">
+        <div class="options-heading">
+          <h1 id="rules-title" class="options-title">Rules</h1>
+          <button
+            class="icon-btn plain"
+            type="button"
+            data-info-toggle
+            aria-controls="info-rules"
+            aria-expanded="false"
+            aria-label="About rules"
+          >
+            <svg class="icon lg" aria-hidden="true" focusable="false">
+              <use href="../theme/ui/icons.svg#i-info"></use>
+            </svg>
+          </button>
+        </div>
+        <div id="info-rules" class="info-panel" hidden>
+          <p>
+            A rule says what Conduit may capture, from which site, and where it goes. Nothing is
+            captured until you create a rule and approve it, and you can switch a rule off or pause
+            everything at any time.
+          </p>
+          <p>
+            Rules you import start switched off and need your approval, just like rules you make
+            here.
+          </p>
+        </div>
+        <div id="rules-root"></div>
+      </section>
+
+      <section aria-labelledby="log-title" class="options-section">
+        <div class="options-heading">
+          <h2 id="log-title" class="options-title">Capture log</h2>
+          <button
+            class="icon-btn plain"
+            type="button"
+            data-info-toggle
+            aria-controls="info-log"
+            aria-expanded="false"
+            aria-label="About the capture log"
+          >
+            <svg class="icon lg" aria-hidden="true" focusable="false">
+              <use href="../theme/ui/icons.svg#i-info"></use>
+            </svg>
+          </button>
+        </div>
+        <div id="info-log" class="info-panel" hidden>
+          <p>
+            Each time an approved rule captures a value it is saved here, in this browser only. The
+            log keeps the newest 1,000 entries. Values are hidden until you choose Show.
+          </p>
+          <p>The downloaded log contains the values: keep it as private as a password.</p>
+        </div>
+        <div id="log-root"></div>
+      </section>
+    </main>
+
+    <script src="../theme/template/theme-switch.js"></script>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

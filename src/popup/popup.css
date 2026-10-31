@@ -25,27 +25,10 @@ body.popup {
   font-size: var(--fs-lg);
 }
 
-.popup-info {
-  margin-block-start: var(--s-3);
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--line-tint);
-  border-radius: var(--r-md);
-  background: var(--info-bg);
-  font-size: var(--fs-sm);
-}
-
-.popup-info p {
-  margin: 0;
-}
-
-.popup-info p + p {
-  margin-block-start: var(--s-2);
-}
-
 .popup-panel {
-  margin-block-start: var(--s-3);
+  margin-block-start: var(--s-2);
   display: grid;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
 .popup-message {
@@ -68,7 +51,7 @@ body.popup {
 }
 
 .popup-cookies {
-  max-height: 232px;
+  max-height: 170px;
   overflow-y: auto;
   border: 1px solid var(--line-tint);
   border-radius: var(--r-md);
@@ -117,18 +100,20 @@ body.popup {
   margin-block-start: var(--s-2);
 }
 
-/* The brand's segmented control sets inactive labels in `mute` on the `hover` surface,
-   which measures 4.31:1 in the light theme (AA needs 4.5:1). Use `ink` for them here.
-   Worth fixing in the brand kit itself; see docs/HANDOFF.md. */
-.seg button[aria-pressed='false'] {
-  color: var(--ink);
+.rules-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-block-end: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line-tint);
+  border-radius: var(--r-md);
+  background: var(--card);
 }
 
-/* Two more brand pairings that fall just under AA in one theme or the other:
-   badge text (`mute` on `hover`, 4.02:1 in dark) and a hovered ghost button
-   (`accent` on `hover`, 4.46:1 in dark). Inside the cookie list use `ink` for both. */
-.popup-cookies .badge,
-.popup-cookies .btn.ghost,
-.popup-cookies .btn.ghost:hover {
-  color: var(--ink);
+.rules-bar-actions {
+  display: flex;
+  gap: var(--s-1);
 }

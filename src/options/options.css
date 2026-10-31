@@ -1,0 +1,101 @@
+/* Layout for the rules and log page. Colour, type and spacing come from the brand tokens. */
+.options-actions-end {
+  margin-inline-start: auto;
+}
+
+.options-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-7);
+  max-width: 820px;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) var(--s-8);
+}
+
+.options-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.options-title {
+  margin: 0;
+  font-size: var(--fs-xl);
+}
+
+.options-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-block: var(--s-3);
+}
+
+.options-stack {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.rule-list {
+  display: grid;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule-text {
+  margin: 0 0 var(--s-2);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.rule-meta,
+.rule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+.rule-actions {
+  margin-block-start: var(--s-3);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.options-empty {
+  padding: var(--s-5) var(--s-3);
+  text-align: center;
+  color: var(--mute);
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.log-table th,
+.log-table td {
+  padding: var(--s-2) var(--s-3);
+  text-align: start;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.log-table code {
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.log-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line-tint);
+  border-radius: var(--r-md);
+  background: var(--card);
+}

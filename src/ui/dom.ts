@@ -38,3 +38,14 @@ export function icon(name: string, size = ''): SVGSVGElement {
   svg.append(use);
   return svg;
 }
+
+/**
+ * Runs `render`, then puts keyboard focus back on the element that had it, found by its
+ * `data-focus-key`, so redrawing a list does not drop the person's place.
+ */
+export function renderKeepingFocus(render: () => void): void {
+  const active = document.activeElement;
+  const key = active instanceof HTMLElement ? active.dataset.focusKey : undefined;
+  render();
+  if (key) document.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(key)}"]`)?.focus();
+}

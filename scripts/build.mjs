@@ -11,12 +11,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Output path (without extension) -> source file. Entries are added with the
 // screens and workers that need them; see docs/ROADMAP.md.
-const ENTRY_POINTS = { 'popup/popup': 'src/popup/popup.ts' };
+const ENTRY_POINTS = {
+  'popup/popup': 'src/popup/popup.ts',
+  'options/options': 'src/options/options.ts',
+  'background/service-worker': 'src/background/service-worker.ts',
+};
 
 // Files copied as they are: source path -> path inside the extension.
 const STATIC_FILES = {
+  'src/ui/shared.css': 'ui/shared.css',
   'src/popup/popup.html': 'popup/popup.html',
   'src/popup/popup.css': 'popup/popup.css',
+  'src/options/options.html': 'options/options.html',
+  'src/options/options.css': 'options/options.css',
 };
 
 // The parts of the brand bundle (src/theme) the extension pages use. The page
