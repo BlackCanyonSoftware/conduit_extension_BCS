@@ -4,6 +4,12 @@ import { loadState, onStateChanged, saveKillSwitch, type StoredState } from '../
 import { h, icon } from '../ui/dom';
 
 function summary(state: StoredState): string {
+  const text = capturingSummary(state);
+  const failing = state.queue.some((item) => item.lastError !== undefined);
+  return failing ? `${text} A delivery has not gone through.` : text;
+}
+
+function capturingSummary(state: StoredState): string {
   if (state.rules.length === 0) return 'No rules yet, so nothing is being captured.';
   if (state.killSwitch) return 'Capture is paused.';
   const active = state.rules.filter((rule) => ruleStatus(rule, false) === 'active').length;

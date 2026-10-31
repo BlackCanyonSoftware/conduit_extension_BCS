@@ -107,7 +107,7 @@ export function mountLog(root: HTMLElement): LogView {
               { class: 'log-table-wrap' },
               h(
                 'table',
-                { class: 'log-table' },
+                { class: 'log-table', attrs: { 'aria-label': 'Capture log' } },
                 h(
                   'thead',
                   {},

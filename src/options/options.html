@@ -81,6 +81,62 @@
         <div id="rules-root"></div>
       </section>
 
+      <section aria-labelledby="apps-title" class="options-section">
+        <div class="options-heading">
+          <h2 id="apps-title" class="options-title">Local apps</h2>
+          <button
+            class="icon-btn plain"
+            type="button"
+            data-info-toggle
+            aria-controls="info-apps"
+            aria-expanded="false"
+            aria-label="About local apps"
+          >
+            <svg class="icon lg" aria-hidden="true" focusable="false">
+              <use href="../theme/ui/icons.svg#i-info"></use>
+            </svg>
+          </button>
+        </div>
+        <div id="info-apps" class="info-panel" hidden>
+          <p>
+            An app is a program that receives values from Conduit. Add one by its address, or let
+            Conduit look on this computer. The app tells Conduit what it would like and why; you
+            choose which requests to approve, and each becomes a rule you can switch off.
+          </p>
+          <p>
+            Apps on this computer need nothing extra. An app on another computer must use https and
+            you confirm it by typing its name, and it stays marked as not on this computer.
+          </p>
+        </div>
+        <div id="apps-root"></div>
+      </section>
+
+      <section aria-labelledby="deliveries-title" class="options-section">
+        <div class="options-heading">
+          <h2 id="deliveries-title" class="options-title">Delivery log</h2>
+          <button
+            class="icon-btn plain"
+            type="button"
+            data-info-toggle
+            aria-controls="info-deliveries"
+            aria-expanded="false"
+            aria-label="About the delivery log"
+          >
+            <svg class="icon lg" aria-hidden="true" focusable="false">
+              <use href="../theme/ui/icons.svg#i-info"></use>
+            </svg>
+          </button>
+        </div>
+        <div id="info-deliveries" class="info-panel" hidden>
+          <p>
+            Every send to an app is listed here with its time, rule, size and result. The log never
+            holds the values that were sent. A failed delivery is shown straight away and tried
+            again a few times; pausing capture also pauses delivery.
+          </p>
+        </div>
+        <div id="deliveries-root"></div>
+      </section>
+
       <section aria-labelledby="log-title" class="options-section">
         <div class="options-heading">
           <h2 id="log-title" class="options-title">Capture log</h2>

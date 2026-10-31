@@ -6,6 +6,114 @@ import { chromium, test as base, type BrowserContext, type Page } from '@playwri
 
 const EXTENSION_PATH = path.resolve('dist');
 
+/** One POST the test app received. `status` is what it answered. */
+export interface Delivered {
+  path: string;
+  body: unknown;
+  status: number;
+}
+
+/** A small app that follows the integration contract, with controls for failing on purpose. */
+export interface TestSink {
+  url: string;
+  port: number;
+  received: Delivered[];
+  /** The next `count` deliveries are answered with `status` instead of 204. */
+  failNext: (count: number, status?: number) => void;
+  /** What the handshake answers. Replace `wants` or the whole object. */
+  handshake: Record<string, unknown>;
+  /** Answer the handshake with this exact text (and status) instead. */
+  answerHandshakeWith: (text: string, status?: number) => void;
+  close: () => Promise<void>;
+}
+
+/** Starts a test app on this computer. Port 0 picks a free one. */
+export async function startSink(port = 0): Promise<TestSink> {
+  const received: Delivered[] = [];
+  const failures = { count: 0, status: 500 };
+  const raw: { text?: string; status: number } = { status: 200 };
+  const sink: TestSink = {
+    url: '',
+    port: 0,
+    received,
+    failNext: (count, status = 500) => {
+      failures.count = count;
+      failures.status = status;
+    },
+    handshake: {
+      conduit: 1,
+      name: 'Test App',
+      wants: [
+        {
+          id: 'sid-want',
+          kind: 'cookie',
+          origin: 'http://localhost',
+          names: ['sid'],
+          why: 'The test app wants the sid cookie to check delivery.',
+        },
+        {
+          id: 'theme-want',
+          kind: 'cookie',
+          origin: 'http://localhost',
+          names: ['theme'],
+          why: 'The test app also wants the theme cookie.',
+        },
+      ],
+    },
+    answerHandshakeWith: (text, status = 200) => {
+      raw.text = text;
+      raw.status = status;
+    },
+    close: () =>
+      new Promise<void>((resolve) => {
+        server.close(() => {
+          resolve();
+        });
+      }),
+  };
+  const server = createServer((request, response) => {
+    const path = new URL(request.url ?? '/', 'http://app.test').pathname;
+    if (request.method === 'GET' && path === '/.well-known/conduit') {
+      response.statusCode = raw.status;
+      response.setHeader('Content-Type', 'application/json');
+      response.end(raw.text ?? JSON.stringify(sink.handshake));
+      return;
+    }
+    if (request.method === 'POST') {
+      const chunks: Buffer[] = [];
+      request.on('data', (chunk: Buffer) => chunks.push(chunk));
+      request.on('end', () => {
+        let body: unknown;
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        } catch {
+          body = undefined;
+        }
+        let status = 204;
+        if (failures.count > 0) {
+          failures.count -= 1;
+          status = failures.status;
+        }
+        received.push({ path, body, status });
+        response.statusCode = status;
+        response.end();
+      });
+      return;
+    }
+    response.statusCode = 404;
+    response.end();
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === 'string') throw new Error('test app has no port');
+  sink.port = address.port;
+  sink.url = `http://127.0.0.1:${String(address.port)}`;
+  return sink;
+}
+
 interface Fixtures {
   context: BrowserContext;
   extensionId: string;
@@ -16,6 +124,8 @@ interface Fixtures {
   site: { url: string };
   /** Opens Conduit's rules and log page in a tab. */
   openOptions: () => Promise<Page>;
+  /** A test app on this computer that follows the integration contract. */
+  testSink: TestSink;
 }
 
 /**
@@ -85,6 +195,13 @@ export const test = base.extend<Fixtures>({
       await page.goto(`chrome-extension://${extensionId}/options/options.html`);
       return page;
     });
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  testSink: async ({}, use) => {
+    const sink = await startSink();
+    await use(sink);
+    await sink.close();
   },
 
   // eslint-disable-next-line no-empty-pattern

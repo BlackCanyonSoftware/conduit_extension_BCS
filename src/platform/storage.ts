@@ -26,6 +26,11 @@ export interface StoredState {
 
 export type StateKey = keyof StoredState;
 
+/** The state of a fresh install, and what a page shows before storage has answered. */
+export function emptyState(): StoredState {
+  return { rules: [], killSwitch: false, log: [], sinks: [], queue: [], deliveries: [] };
+}
+
 const STATE_KEYS: StateKey[] = ['rules', 'killSwitch', 'log', 'sinks', 'queue', 'deliveries'];
 
 export async function loadState(): Promise<StoredState> {

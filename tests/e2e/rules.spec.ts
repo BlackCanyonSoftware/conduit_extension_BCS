@@ -1,26 +1,7 @@
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-
-/** Opens a page on the test site, which makes the browser set (or change) its cookies. */
-async function visit(context: BrowserContext, url: string): Promise<void> {
-  const page = await context.newPage();
-  await page.goto(url);
-  await page.close();
-}
-
-/** Fills in and approves a rule through the page, as a person would. */
-async function createRule(options: Page, site: string, names: string): Promise<void> {
-  await options.getByRole('button', { name: 'New rule' }).click();
-  await options.getByLabel('Site', { exact: true }).fill(site);
-  await options.getByLabel('Cookie names').fill(names);
-  await options.getByRole('button', { name: 'Review rule' }).click();
-  await options.getByRole('button', { name: 'Approve and save' }).click();
-  await expect(options.getByText('Rule saved and switched on.')).toBeVisible();
-}
-
-const logRows = (options: Page) => options.getByRole('table').getByRole('row');
+import { createRule, logRows, visit } from './helpers';
 
 test.describe('rules and capture (US-004 to US-007)', () => {
   test('US-005: a fresh install captures nothing', async ({ context, openOptions, site }) => {

@@ -3,7 +3,7 @@ import type { Cookie } from '../cookies/types';
 import { isRecord } from '../records';
 import { describeRule } from '../rules/describe';
 import type { Rule } from '../rules/types';
-import { parseSinkUrl } from './host';
+import { parseRoute, parseSinkUrl } from './host';
 import type { Sink } from './types';
 
 /** A captured value waiting to be sent to an app, with where it has got to. */
@@ -163,6 +163,12 @@ export function appendDelivery(
   return [...log, entry].slice(-cap);
 }
 
+/** The delivery log as a file. It holds no values, only what happened to each delivery. */
+export function deliveryLogToJson(entries: readonly DeliveryEntry[]): string {
+  return `${JSON.stringify({ conduit: 1, kind: 'delivery-log', entries }, null, 2)}
+`;
+}
+
 function isStringMap(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((item) => typeof item === 'string');
 }
@@ -185,6 +191,7 @@ export function readStoredSinks(raw: unknown): Sink[] {
     }
     const address = parseSinkUrl(item.url);
     if (!address.ok || address.url !== item.url) continue;
+    if (item.route !== undefined && !parseRoute(item.route).ok) continue;
     sinks.push({
       id: item.id,
       name: item.name,

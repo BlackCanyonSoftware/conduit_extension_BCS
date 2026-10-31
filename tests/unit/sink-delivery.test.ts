@@ -5,6 +5,7 @@ import {
   QUEUE_CAP,
   afterFailure,
   appendDelivery,
+  deliveryLogToJson,
   deliveryPayload,
   digestOf,
   dueDeliveries,
@@ -266,6 +267,16 @@ describe('keeping the delivery log and the queue to a sensible size', () => {
     expect(QUEUE_CAP).toBe(200);
   });
 
+  it('writes the delivery log as a file', () => {
+    const parsed = JSON.parse(deliveryLogToJson([entry('a')])) as {
+      kind: string;
+      entries: unknown[];
+    };
+
+    expect(parsed).toMatchObject({ kind: 'delivery-log' });
+    expect(parsed.entries).toHaveLength(1);
+  });
+
   it('never stores a value in a delivery entry', () => {
     expect(Object.keys(entry('a'))).not.toContain('data');
   });
@@ -279,6 +290,7 @@ describe('reading saved apps, queue and delivery log', () => {
       sink,
       route,
     ]);
+    expect(readStoredSinks([{ ...sink, route: '//other.test/x' }])).toEqual([]);
     expect(readStoredSinks(undefined)).toEqual([]);
   });
 
