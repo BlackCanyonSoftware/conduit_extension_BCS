@@ -38,7 +38,9 @@ with behaviour changes.
 
 Unit tests live in `tests/unit/` and describe behaviour through public interfaces.
 Reference PRD story IDs (`US-001`) in test names where they apply. End-to-end tests
-with Playwright arrive with the first screens.
+use Playwright with the built extension loaded in headless Chromium
+(`tests/e2e/`); run `npx playwright install chromium` once, then `npm run test:e2e`.
+They include automated accessibility checks (axe) for every screen.
 
 ## Definition of Done
 

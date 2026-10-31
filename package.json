@@ -10,16 +10,20 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:e2e": "npm run build && playwright test",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "prepare": "node scripts/install-hooks.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/chrome": "^0.3.7",
     "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",

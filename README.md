@@ -40,12 +40,16 @@ npm run check
 | Script                 | What it does                                                     |
 | ---------------------- | ---------------------------------------------------------------- |
 | `npm run build`        | Builds the unpacked extension into `dist/`                       |
+| `npm run dev`          | Rebuilds `dist/` whenever `src/` changes                         |
 | `npm test`             | Unit tests (Vitest)                                              |
+| `npm run test:e2e`     | Builds, then runs the Playwright tests in headless Chromium      |
 | `npm run lint`         | ESLint (strict, type-aware)                                      |
 | `npm run typecheck`    | TypeScript `--noEmit`                                            |
 | `npm run format`       | Prettier, write                                                  |
 | `npm run format:check` | Prettier, check                                                  |
 | `npm run check`        | Format check, lint, type check, tests and build, as CI runs them |
+
+The end-to-end tests need Playwright's Chromium once: `npx playwright install chromium`.
 
 `npm ci` also points git at `.githooks/`, whose pre-commit hook checks formatting and lint on staged files.
 
@@ -54,7 +58,7 @@ npm run check
 ```
 src/        extension source (manifest.json, core logic, UI)
 scripts/    build and tooling scripts
-tests/      unit tests
+tests/      unit tests (unit/) and Playwright end-to-end tests (e2e/)
 docs/       PRD, roadmap, architecture, design, ADRs, handoff
 ```
 

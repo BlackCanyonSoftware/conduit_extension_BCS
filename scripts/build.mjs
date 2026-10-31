@@ -2,6 +2,7 @@
 // Bundles each entry point with esbuild and writes manifest.json with the version
 // taken from package.json, which is the single source of truth for it.
 import { build } from 'esbuild';
+import { watch } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -63,3 +64,19 @@ const outDir = path.resolve(
 );
 await buildExtension(outDir);
 console.log(`Built extension to ${outDir}`);
+
+// --watch: rebuild whenever something under src/ changes. Reload the extension in
+// chrome://extensions afterwards to pick the change up.
+if (process.argv.includes('--watch')) {
+  let timer;
+  watch(path.join(root, 'src'), { recursive: true }, () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      buildExtension(outDir).then(
+        () => console.log(`Rebuilt ${new Date().toLocaleTimeString()}`),
+        (error) => console.error(error),
+      );
+    }, 150);
+  });
+  console.log('Watching src/ for changes. Press Ctrl+C to stop.');
+}

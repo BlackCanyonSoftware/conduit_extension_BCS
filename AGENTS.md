@@ -17,6 +17,8 @@ and delivers user-approved data to local apps. Rigor tier: **MVP**.
 npm ci                 # install; also sets git hooks
 npm run check          # format check, lint, typecheck, tests, build
 npm test               # unit tests (Vitest)
+npm run test:e2e       # builds, then Playwright in headless Chromium
+npm run dev            # rebuild dist/ on change
 npm run build          # unpacked extension into dist/
 npm run format         # Prettier, write
 ```
