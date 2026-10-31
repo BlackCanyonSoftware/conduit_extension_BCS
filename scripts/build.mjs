@@ -23,15 +23,23 @@ const STATIC_FILES = {
 // partials (*.html) are templates for other projects and are left out.
 const THEME_DIRS = ['font', 'icon', 'mark', 'template', 'theme', 'ui', 'wordmark'];
 
+// --host-permission <pattern> (repeatable) pre-grants site access in the built manifest.
+// Only the end-to-end tests use it, because a test cannot click the browser's own
+// permission prompt. Release builds never pass it.
+const grantedHosts = process.argv.flatMap((arg, index) =>
+  arg === '--host-permission' ? [process.argv[index + 1] ?? ''] : [],
+);
+
 async function buildExtension(outDir) {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   const manifest = JSON.parse(await readFile(path.join(root, 'src', 'manifest.json'), 'utf8'));
+  const hostPermissions = grantedHosts.length > 0 ? { host_permissions: grantedHosts } : {};
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
   await writeFile(
     path.join(outDir, 'manifest.json'),
-    `${JSON.stringify({ ...manifest, version: pkg.version }, null, 2)}\n`,
+    `${JSON.stringify({ ...manifest, ...hostPermissions, version: pkg.version }, null, 2)}\n`,
   );
 
   for (const [from, to] of Object.entries(STATIC_FILES)) {

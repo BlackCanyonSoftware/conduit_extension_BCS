@@ -52,7 +52,7 @@
     <main class="popup-main">
       <section aria-labelledby="status-title">
         <div class="popup-heading">
-          <h1 id="status-title" class="popup-title">Conduit is set up</h1>
+          <h1 id="status-title" class="popup-title">Cookies for this site</h1>
           <button
             class="icon-btn plain"
             type="button"
@@ -66,13 +66,15 @@
             </svg>
           </button>
         </div>
-        <p class="muted">No rules yet, so nothing is being shared.</p>
         <div id="info-status" class="popup-info" hidden>
           <p>
-            Conduit exports your own browser's cookies and hands the values you choose to local apps
-            you approve. It does nothing until you create and approve a rule.
+            Conduit lists the cookies your browser holds for this site, including HttpOnly ones that
+            page scripts cannot see. Choose the ones you want, then copy or download them as
+            cookies.txt, JSON or a Cookie header.
           </p>
+          <p>Exports contain your signed-in session values. Keep them as private as a password.</p>
         </div>
+        <div id="cookie-panel" class="popup-panel" aria-busy="true"></div>
       </section>
     </main>
 

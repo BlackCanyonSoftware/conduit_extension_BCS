@@ -9,7 +9,7 @@ test.describe('popup (US-015, US-016)', () => {
     });
     await page.reload();
 
-    await expect(page.getByRole('heading', { name: 'Conduit is set up' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cookies for this site' })).toBeVisible();
     expect(errors).toEqual([]);
   });
 
