@@ -3,7 +3,7 @@
   "name": "Conduit",
   "description": "Export your own browser's cookies and hand approved data to local apps you choose.",
   "minimum_chrome_version": "120",
-  "permissions": ["activeTab", "alarms", "cookies", "storage"],
+  "permissions": ["activeTab", "alarms", "cookies", "storage", "webRequest"],
   "optional_host_permissions": ["*://*/*"],
   "icons": {
     "16": "theme/icon/icon-transparent-16.png",

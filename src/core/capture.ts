@@ -32,11 +32,28 @@ export function cookieBelongsToSite(cookieDomain: string, site: string): boolean
   return domain === wanted || domain.endsWith(`.${wanted}`);
 }
 
-/** The cookies a rule names, on the rule's site. */
+/** The cookies a rule names, on the rule's site. A header rule names no cookies. */
 export function matchRuleCookies(rule: Rule, cookies: readonly Cookie[]): Cookie[] {
+  if (rule.kind !== 'cookie') return [];
   return cookies.filter(
     (cookie) => rule.names.includes(cookie.name) && cookieBelongsToSite(cookie.domain, rule.site),
   );
+}
+
+/** One value a rule picked out of the browser's data: a cookie or a header, and where it came from. */
+export interface Observed {
+  name: string;
+  value: string;
+  origin: string;
+}
+
+/** The cookies a rule names, in the shape shared with header captures. */
+export function observedCookies(rule: Rule, cookies: readonly Cookie[]): Observed[] {
+  return matchRuleCookies(rule, cookies).map((cookie) => ({
+    name: cookie.name,
+    value: cookie.value,
+    origin: cookieOrigin(cookie),
+  }));
 }
 
 /** The size of a capture: the UTF-8 length of its data as JSON. */
@@ -68,17 +85,27 @@ export function capturesFor(
   log: readonly CaptureEntry[],
   context: { now: string; newId: () => string },
 ): CaptureEntry[] {
+  return capturesForObserved(rule, observedCookies(rule, cookies), log, context);
+}
+
+/** The same for values already picked out by a rule, whether cookies or headers. */
+export function capturesForObserved(
+  rule: Rule,
+  observed: readonly Observed[],
+  log: readonly CaptureEntry[],
+  context: { now: string; newId: () => string },
+): CaptureEntry[] {
   const created: CaptureEntry[] = [];
-  for (const cookie of matchRuleCookies(rule, cookies)) {
-    if (repeatsLastValue([...log, ...created], rule.id, cookie.name, cookie.value)) continue;
-    const data = { [cookie.name]: cookie.value };
+  for (const item of observed) {
+    if (repeatsLastValue([...log, ...created], rule.id, item.name, item.value)) continue;
+    const data = { [item.name]: item.value };
     created.push({
       id: context.newId(),
       at: context.now,
       ruleId: rule.id,
       ruleText: describeRule(rule),
       site: rule.site,
-      origin: cookieOrigin(cookie),
+      origin: item.origin,
       destination: 'log',
       data,
       bytes: captureBytes(data),

@@ -7,6 +7,7 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Header capture: a rule can capture named request or response headers from a site, with the same approval, switch, log and delivery to apps as a cookie rule. Only the headers you name are read; everything else in the request is left alone. Apps can ask for headers in their handshake.
 - Project scaffolding: TypeScript, esbuild build, Vitest, ESLint, Prettier, CI workflow.
 - Local apps: add a program that receives values from Conduit by its address, or let Conduit look on this computer. The app tells Conduit what it would like and why; you approve the requests you choose and each becomes a rule. Apps on other computers must use https and you confirm them by typing their name. An app can have its own delivery path.
 - A delivery log (time, rule, app, size, result; never the values). A delivery that fails is shown at once on the rules page, in the popup and with a ! on the toolbar icon, retried automatically after 30 seconds, 2, 10 and 30 minutes, and can be retried or discarded by hand. Pausing capture pauses delivery.

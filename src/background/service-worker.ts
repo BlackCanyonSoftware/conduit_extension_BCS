@@ -1,11 +1,18 @@
-import { appendCapture, capturesFor } from '../core/capture';
+import {
+  appendCapture,
+  capturesFor,
+  capturesForObserved,
+  observedCookies,
+  type Observed,
+} from '../core/capture';
+import { matchRuleHeaders, type HeaderObservation } from '../core/headers';
 import { ruleStatus, type Rule } from '../core/rules/types';
 import {
   afterFailure,
   appendDelivery,
   dueDeliveries,
   nextWake,
-  planSinkDeliveries,
+  planSinkDeliveriesFor,
   trimQueue,
   type DeliveryEntry,
   type PendingDelivery,
@@ -14,8 +21,10 @@ import {
 import { sinkTarget, type Sink } from '../core/sinks/types';
 import { onDeliveryWake, setDeliveryWake } from '../platform/alarms';
 import { fromChromeCookie, getSiteCookies } from '../platform/cookies';
+import { onHeaders } from '../platform/headers';
 import { SinkError, postDelivery } from '../platform/sinks';
 import {
+  loadRulesAndSwitch,
   loadSeen,
   loadState,
   onStateChanged,
@@ -93,7 +102,7 @@ async function recordDropped(
 /** Queues what the rules that send to an app want sent for these cookies, then tries to send. */
 async function queueForSinks(
   state: StoredState,
-  cookies: Parameters<typeof planSinkDeliveries>[2],
+  observe: (rule: Rule) => Observed[],
   options: { force: boolean; onlyRule?: string },
 ): Promise<number> {
   let seen = await loadSeen();
@@ -101,10 +110,12 @@ async function queueForSinks(
   for (const rule of state.rules) {
     if (rule.destination.kind !== 'sink' || !isCapturing(rule, state.killSwitch)) continue;
     if (options.onlyRule !== undefined && rule.id !== options.onlyRule) continue;
+    const observed = observe(rule);
+    if (observed.length === 0) continue;
     const { sinkId } = rule.destination;
     const sink = state.sinks.find((candidate) => candidate.id === sinkId);
     if (!sink) continue;
-    const plan = await planSinkDeliveries(rule, sink, cookies, seen, context(), {
+    const plan = await planSinkDeliveriesFor(rule, sink, observed, seen, context(), {
       force: options.force,
     });
     created.push(...plan.pending);
@@ -135,7 +146,52 @@ async function handleCookieChange(cookie: chrome.cookies.Cookie): Promise<void> 
   }
   if (logged) await saveLog(log);
 
-  if ((await queueForSinks(state, [changed], { force: false })) > 0) await processDue();
+  const queued = await queueForSinks(state, (rule) => observedCookies(rule, [changed]), {
+    force: false,
+  });
+  if (queued > 0) await processDue();
+}
+
+// Header rules look at every request to a site the person has allowed, so the cheap part runs
+// first: the rules are read from storage once and kept until they change.
+let headerRules: Promise<Rule[]> | undefined;
+
+function activeHeaderRules(): Promise<Rule[]> {
+  headerRules ??= loadRulesAndSwitch().then(({ rules, killSwitch }) =>
+    rules.filter((rule) => rule.kind === 'header' && isCapturing(rule, killSwitch)),
+  );
+  return headerRules;
+}
+
+/** Headers were sent or received: save or send the ones an active header rule names. */
+async function handleHeaders(observation: HeaderObservation): Promise<void> {
+  const rules = (await activeHeaderRules()).filter(
+    (rule) => matchRuleHeaders(rule, observation).length > 0,
+  );
+  if (rules.length === 0) return;
+
+  const state = await loadState();
+  let log = state.log;
+  let logged = false;
+  for (const rule of rules) {
+    const current = state.rules.find((candidate) => candidate.id === rule.id);
+    if (current?.destination.kind !== 'log' || !isCapturing(current, state.killSwitch)) continue;
+    const created = capturesForObserved(
+      current,
+      matchRuleHeaders(current, observation),
+      log,
+      logContext(),
+    );
+    if (created.length === 0) continue;
+    log = appendCapture(log, created);
+    logged = true;
+  }
+  if (logged) await saveLog(log);
+
+  const queued = await queueForSinks(state, (rule) => matchRuleHeaders(rule, observation), {
+    force: false,
+  });
+  if (queued > 0) await processDue();
 }
 
 /** The outcome of one try: the queue and delivery log after it. */
@@ -219,9 +275,18 @@ async function captureNow(ruleId: string): Promise<WorkerResponse> {
   if (status !== 'active') {
     return { ok: false, reason: `The rule is not capturing right now (${status}).` };
   }
+  if (rule.kind === 'header') {
+    return {
+      ok: false,
+      reason: 'A header rule captures while pages load, so there is nothing to run now.',
+    };
+  }
   const cookies = await getSiteCookies(rule.site);
   if (rule.destination.kind === 'sink') {
-    const count = await queueForSinks(state, cookies, { force: true, onlyRule: rule.id });
+    const count = await queueForSinks(state, (item) => observedCookies(item, cookies), {
+      force: true,
+      onlyRule: rule.id,
+    });
     if (count > 0) await processDue();
     return { ok: true, count };
   }
@@ -279,6 +344,12 @@ chrome.cookies.onChanged.addListener(({ cookie, removed }) => {
   });
 });
 
+onHeaders((observation) => {
+  inOrder(() => handleHeaders(observation)).catch((error: unknown) => {
+    console.error('Could not handle headers', error);
+  });
+});
+
 onDeliveryWake(() => {
   inOrder(processDue).catch((error: unknown) => {
     console.error('Could not process deliveries', error);
@@ -311,6 +382,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
 });
 
 onStateChanged((changed) => {
+  if (changed.includes('rules') || changed.includes('killSwitch')) headerRules = undefined;
   if (changed.includes('killSwitch') || changed.includes('queue')) refreshBadge();
   if (changed.includes('killSwitch')) {
     // Resuming sends what is due; pausing needs nothing, because processDue checks the switch.

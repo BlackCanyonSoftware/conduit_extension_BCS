@@ -9,6 +9,7 @@ It shows everything an app needs to receive values from Conduit:
 Run it, then in Conduit's rules page choose "Add app" and enter its address:
 
     python examples/reference_sink.py --site example.com --names sid
+    python examples/reference_sink.py --site example.com --kind header --names x-api-key
 
 It listens on this computer only. It prints the names and sizes of what it
 receives, never the values, because values are secrets.
@@ -22,15 +23,16 @@ MAX_BODY_BYTES = 64 * 1024
 
 
 def make_handler(args):
-    wants = [
-        {
-            "id": args.want_id,
-            "kind": "cookie",
-            "origin": f"https://*.{args.site}",
-            "names": args.names,
-            "why": args.why,
-        }
-    ]
+    want = {
+        "id": args.want_id,
+        "kind": args.kind,
+        "origin": f"https://*.{args.site}",
+        "names": args.names,
+        "why": args.why,
+    }
+    if args.kind == "header":
+        want["direction"] = args.direction
+    wants = [want]
     failures_left = [args.fail_first]
 
     class Handler(BaseHTTPRequestHandler):
@@ -82,8 +84,17 @@ def main():
     parser = argparse.ArgumentParser(description="A small Conduit app for trying things out.")
     parser.add_argument("--port", type=int, default=8778, help="port to listen on (0 picks one)")
     parser.add_argument("--name", default="Reference app", help="name shown in Conduit")
-    parser.add_argument("--site", default="example.com", help="site whose cookies to ask for")
-    parser.add_argument("--names", nargs="+", default=["sid"], help="cookie names to ask for")
+    parser.add_argument("--site", default="example.com", help="site whose data to ask for")
+    parser.add_argument(
+        "--kind", choices=["cookie", "header"], default="cookie", help="what to ask for"
+    )
+    parser.add_argument(
+        "--direction",
+        choices=["request", "response"],
+        default="request",
+        help="for headers: the ones the browser sends or the ones it gets back",
+    )
+    parser.add_argument("--names", nargs="+", default=["sid"], help="cookie or header names to ask for")
     parser.add_argument("--want-id", default="session", help="id of the request")
     parser.add_argument(
         "--why",

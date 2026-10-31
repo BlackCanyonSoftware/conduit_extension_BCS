@@ -11,10 +11,16 @@ function joinNames(names: readonly string[]): string {
  * Pass the app a rule sends to; an app on another computer is named as such.
  */
 export function describeRule(
-  rule: Pick<Rule, 'names' | 'site' | 'destination'>,
+  rule: Pick<Rule, 'names' | 'site' | 'destination'> & Partial<Pick<Rule, 'kind' | 'direction'>>,
   sink?: Pick<Sink, 'name' | 'url' | 'loopback'>,
 ): string {
-  const noun = rule.names.length === 1 ? 'cookie' : 'cookies';
+  const single = rule.names.length === 1;
+  const noun =
+    rule.kind === 'header'
+      ? `${rule.direction ?? 'request'} ${single ? 'header' : 'headers'}`
+      : single
+        ? 'cookie'
+        : 'cookies';
   const subject = `the ${noun} ${joinNames(rule.names)} from ${rule.site}`;
   if (rule.destination.kind === 'log') return `Save ${subject} to Conduit's local log.`;
   if (!sink) return `Send ${subject} to an app that is no longer set up.`;

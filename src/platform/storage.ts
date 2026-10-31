@@ -45,6 +45,12 @@ export async function loadState(): Promise<StoredState> {
   };
 }
 
+/** Just the rules and the pause switch: a light read for work done on every web request. */
+export async function loadRulesAndSwitch(): Promise<{ rules: Rule[]; killSwitch: boolean }> {
+  const stored = await chrome.storage.local.get(['rules', 'killSwitch']);
+  return { rules: readStoredRules(stored.rules), killSwitch: stored.killSwitch === true };
+}
+
 export function saveRules(rules: readonly Rule[]): Promise<void> {
   return chrome.storage.local.set({ rules });
 }

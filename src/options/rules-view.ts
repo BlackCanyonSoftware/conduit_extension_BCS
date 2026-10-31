@@ -1,8 +1,8 @@
 import { patternsForSite } from '../core/cookies/site';
 import { describeRule } from '../core/rules/describe';
 import { exportRules, importRules, RuleImportError } from '../core/rules/transfer';
-import { ruleStatus, type Rule, type RuleStatus } from '../core/rules/types';
-import { parseRuleDraft, type RuleDraft } from '../core/rules/validate';
+import { ruleStatus, type HeaderDirection, type Rule, type RuleStatus } from '../core/rules/types';
+import { parseHeaderRuleDraft, parseRuleDraft, type RuleDraft } from '../core/rules/validate';
 import { requestSiteAccess } from '../platform/cookies';
 import { requestCaptureNow, requestDiscard } from '../platform/extension';
 import { saveKillSwitch, saveRules, type StoredState } from '../platform/storage';
@@ -15,6 +15,24 @@ const STATUS_BADGE: Record<RuleStatus, { label: string; className: string }> = {
   disabled: { label: 'Off', className: 'badge plain' },
   'needs-approval': { label: 'Needs approval', className: 'badge warn' },
 };
+
+/** What the new-rule form can capture: cookies, or the headers of requests or responses. */
+type CaptureChoice = 'cookie' | HeaderDirection;
+
+const CAPTURE_LABELS: Record<CaptureChoice, string> = {
+  cookie: 'Cookies',
+  request: 'Request headers (sent by the browser)',
+  response: 'Response headers (received by the browser)',
+};
+
+interface FormValues {
+  site: string;
+  names: string;
+  capture: CaptureChoice;
+}
+
+type ReviewDraft =
+  (RuleDraft & { kind: 'cookie' }) | (RuleDraft & { kind: 'header'; direction: HeaderDirection });
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -63,7 +81,7 @@ export function mountRules(root: HTMLElement): RulesView {
   });
 
   newRule.addEventListener('click', () => {
-    showForm({ site: '', names: '' }, {});
+    showForm({ site: '', names: '', capture: 'cookie' }, {});
   });
   importButton.addEventListener('click', () => {
     fileInput.click();
@@ -118,6 +136,7 @@ export function mountRules(root: HTMLElement): RulesView {
   function approvalPanel(options: {
     text: string;
     site: string;
+    noun: 'cookies' | 'headers';
     confirm: string;
     onApprove: () => Promise<void>;
     onBack: (() => void) | undefined;
@@ -155,7 +174,7 @@ export function mountRules(root: HTMLElement): RulesView {
           h(
             'span',
             { class: 'small' },
-            `Your browser will ask whether Conduit may read ${options.site} cookies. Nothing is captured until you approve.`,
+            `Your browser will ask whether Conduit may read ${options.site} ${options.noun}. Nothing is captured until you approve.`,
           ),
         ),
       ),
@@ -172,10 +191,16 @@ export function mountRules(root: HTMLElement): RulesView {
     );
   }
 
-  function showForm(
-    values: { site: string; names: string },
-    errors: { site?: string; names?: string },
-  ): void {
+  function showForm(values: FormValues, errors: { site?: string; names?: string }): void {
+    const capture = h(
+      'select',
+      { class: 'input', attrs: { id: 'rule-capture' } },
+      ...(Object.entries(CAPTURE_LABELS) as [CaptureChoice, string][]).map(([value, label]) =>
+        h('option', { attrs: { value } }, label),
+      ),
+    );
+    capture.value = values.capture;
+    const namesLabel = h('label', { class: 'label', attrs: { for: 'rule-names' } });
     const site = h('input', {
       class: 'input',
       attrs: {
@@ -200,6 +225,17 @@ export function mountRules(root: HTMLElement): RulesView {
     });
     site.value = values.site;
     names.value = values.names;
+    const namesHint = h('span', { class: 'hint', attrs: { id: 'rule-names-hint' } });
+    const describeNames = (): void => {
+      const headers = capture.value !== 'cookie';
+      namesLabel.textContent = headers ? 'Header names' : 'Cookie names';
+      namesHint.textContent = headers
+        ? 'Separate names with commas or spaces. Only the headers you name are read.'
+        : 'Separate names with commas or spaces.';
+      names.placeholder = headers ? 'authorization, x-api-key' : 'sid, theme';
+    };
+    describeNames();
+    capture.addEventListener('change', describeNames);
     const siteError = h('p', {
       class: 'field-error',
       attrs: { id: 'rule-site-error', role: 'alert' },
@@ -227,6 +263,12 @@ export function mountRules(root: HTMLElement): RulesView {
         h(
           'div',
           { class: 'field' },
+          h('label', { class: 'label', attrs: { for: 'rule-capture' } }, 'What to capture'),
+          capture,
+        ),
+        h(
+          'div',
+          { class: 'field' },
           h('label', { class: 'label', attrs: { for: 'rule-site' } }, 'Site'),
           site,
           h(
@@ -236,18 +278,7 @@ export function mountRules(root: HTMLElement): RulesView {
           ),
           siteError,
         ),
-        h(
-          'div',
-          { class: 'field' },
-          h('label', { class: 'label', attrs: { for: 'rule-names' } }, 'Cookie names'),
-          names,
-          h(
-            'span',
-            { class: 'hint', attrs: { id: 'rule-names-hint' } },
-            'Separate names with commas or spaces.',
-          ),
-          namesError,
-        ),
+        h('div', { class: 'field' }, namesLabel, names, namesHint, namesError),
         h(
           'div',
           { class: 'form-actions' },
@@ -270,25 +301,33 @@ export function mountRules(root: HTMLElement): RulesView {
     );
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const result = parseRuleDraft({ site: site.value, names: names.value });
-      if (result.ok) showReview(result.draft);
-      else showForm({ site: site.value, names: names.value }, result.errors);
+      const choice = capture.value as CaptureChoice;
+      const typed = { site: site.value, names: names.value, capture: choice };
+      const result =
+        choice === 'cookie'
+          ? parseRuleDraft(typed)
+          : parseHeaderRuleDraft({ ...typed, direction: choice });
+      if (!result.ok) showForm(typed, result.errors);
+      else if (choice === 'cookie') showReview({ ...result.draft, kind: 'cookie' });
+      else showReview({ ...result.draft, kind: 'header', direction: choice });
     });
     formRegion.replaceChildren(form);
     (errors.names && !errors.site ? names : site).focus();
   }
 
-  function showReview(draft: RuleDraft): void {
+  function showReview(draft: ReviewDraft): void {
     const text = describeRule({ ...draft, destination: { kind: 'log' } });
     const panel = approvalPanel({
       text,
       site: draft.site,
+      noun: draft.kind === 'header' ? 'headers' : 'cookies',
       confirm: 'Approve and save',
       onApprove: async () => {
         const now = new Date().toISOString();
         const rule: Rule = {
           id: crypto.randomUUID(),
-          kind: 'cookie',
+          kind: draft.kind,
+          ...(draft.kind === 'header' ? { direction: draft.direction } : {}),
           site: draft.site,
           names: draft.names,
           destination: { kind: 'log' },
@@ -301,7 +340,14 @@ export function mountRules(root: HTMLElement): RulesView {
         status.textContent = 'Rule saved and switched on.';
       },
       onBack: () => {
-        showForm({ site: draft.site, names: draft.names.join(', ') }, {});
+        showForm(
+          {
+            site: draft.site,
+            names: draft.names.join(', '),
+            capture: draft.kind === 'header' ? draft.direction : 'cookie',
+          },
+          {},
+        );
       },
       onCancel: () => {
         formRegion.replaceChildren();
@@ -354,7 +400,7 @@ export function mountRules(root: HTMLElement): RulesView {
         ),
       );
     }
-    if (state === 'active') {
+    if (state === 'active' && rule.kind === 'cookie') {
       actions.append(
         h(
           'button',
@@ -465,6 +511,7 @@ export function mountRules(root: HTMLElement): RulesView {
           approvalPanel({
             text: sentence(rule),
             site: rule.site,
+            noun: rule.kind === 'header' ? 'headers' : 'cookies',
             confirm: 'Approve and switch on',
             onApprove: async () => {
               const now = new Date().toISOString();

@@ -1,6 +1,6 @@
 import { isRecord } from '../records';
-import type { Destination, Rule } from './types';
-import { checkNames, normalizeSite } from './validate';
+import type { Destination, HeaderDirection, Rule } from './types';
+import { checkHeaderNames, checkNames, normalizeSite } from './validate';
 
 /** Thrown when a rules file cannot be imported. The message says what to fix. */
 export class RuleImportError extends Error {
@@ -11,7 +11,7 @@ const FILE_VERSION = 1;
 const MAX_FILE_CHARACTERS = 1_000_000;
 const MAX_RULES = 200;
 
-type Definition = Pick<Rule, 'kind' | 'site' | 'names' | 'destination'>;
+type Definition = Pick<Rule, 'kind' | 'site' | 'names' | 'destination' | 'direction'>;
 
 /**
  * Writes the rules' definitions as a file. Approval and on/off state are never shared.
@@ -22,6 +22,7 @@ export function exportRules(rules: readonly Rule[]): { text: string; skipped: nu
   const shareable = rules.filter((rule) => rule.destination.kind === 'log');
   const definitions: Definition[] = shareable.map((rule) => ({
     kind: rule.kind,
+    ...(rule.direction === undefined ? {} : { direction: rule.direction }),
     site: rule.site,
     names: [...rule.names],
     destination: { kind: 'log' },
@@ -55,21 +56,42 @@ function readDefinition(
   allowSink: boolean,
 ): { definition: Definition } | { problem: string } {
   if (!isRecord(raw)) return { problem: 'it is not a rule.' };
-  if (raw.kind !== 'cookie') return { problem: 'the kind must be "cookie".' };
+  if (raw.kind !== 'cookie' && raw.kind !== 'header') {
+    return { problem: 'the kind must be "cookie" or "header".' };
+  }
+  const isHeader = raw.kind === 'header';
 
   const site = typeof raw.site === 'string' ? normalizeSite(raw.site) : undefined;
   if (site === undefined) return { problem: 'the site is not a website address.' };
 
+  let direction: HeaderDirection | undefined;
+  if (isHeader) {
+    if (raw.direction !== 'request' && raw.direction !== 'response') {
+      return { problem: 'a header rule needs a direction, "request" or "response".' };
+    }
+    direction = raw.direction;
+  }
+
   const names = raw.names;
   if (!Array.isArray(names) || !names.every((name): name is string => typeof name === 'string')) {
-    return { problem: 'the cookie names must be a list of text.' };
+    return { problem: `the ${isHeader ? 'header' : 'cookie'} names must be a list of text.` };
   }
-  const namesProblem = checkNames(names);
+  const namesProblem = isHeader ? checkHeaderNames(names) : checkNames(names);
   if (namesProblem) return { problem: namesProblem };
 
   const destination = readDestination(raw.destination, allowSink);
   if (!destination) return { problem: "the destination must be Conduit's local log." };
-  return { definition: { kind: 'cookie', site, names: [...names], destination } };
+  return {
+    definition: isHeader
+      ? {
+          kind: 'header',
+          ...(direction === undefined ? {} : { direction }),
+          site,
+          names: [...new Set(names.map((name) => name.toLowerCase()))],
+          destination,
+        }
+      : { kind: 'cookie', site, names: [...names], destination },
+  };
 }
 
 /**

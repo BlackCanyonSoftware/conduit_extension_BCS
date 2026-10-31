@@ -4,20 +4,22 @@
 
 - Repo cloned from `BlackCanyonSoftware/conduit_extension_BCS` (MIT licence present).
 - Plan approved by the owner (2026-10-30): PRD, ROADMAP, ARCHITECTURE, DESIGN, INTEGRATION-CONTRACT, ADRs 0001 to 0006.
-- **Milestones 0 to 3 are done.** Milestone 3 (apps that receive captures, US-008 to US-011) works end to end in headless Chromium, including against the Python example app.
+- **Milestones 0 to 4 are done.** Milestone 3 (apps that receive captures, US-008 to US-011) works end to end in headless Chromium, including against the Python example app. Milestone 4 (header capture, US-012) adds a header rule kind: request or response headers, named one by one, on the same approval, switch, log, queue and delivery log; apps can ask for headers (ADR 0007).
 - Brand: `src/theme/` and `docs/brand/` are generated with `brandkit bundle conduit` (never edit by hand; `brandkit check` reports drift).
 - **Rules page** (`src/options/`, a tab): Rules, **Local apps** (add by address or "Look on this computer", review requests with the app's reason word for word, approve some, Refresh requests, Remove), **Delivery log** (no values; download, clear), Capture log.
 - **Service worker**: cookie change to log rule or queued delivery; sends (`204` = success), logs the result, retries from `chrome.alarms` (30 s, 2, 10, 30 min), then waits for Retry now / Discard; pausing halts delivery; badge OFF while paused and `!` while a delivery is failing; a full queue (200) logs the values it pushes out instead of dropping them silently.
 - **Popup**: cookie export, rules bar with Pause all / Resume and a "delivery has not gone through" note.
 - **Core** (`src/core/`): `sinks/host.ts` (address, loopback, https rule, typed confirmation, delivery path), `sinks/handshake.ts`, `sinks/delivery.ts` (queue, retry schedule, digest-based "unchanged" check, stored readers), rule destinations (`log` | `sink`), exported rules leave out app rules.
 - **Example app**: `examples/reference_sink.py` (standard library only). Contract: `docs/INTEGRATION-CONTRACT.md`.
-- Manifest permissions: `activeTab`, `alarms`, `cookies`, `storage`; `optional_host_permissions: ["*://*/*"]`; no `host_permissions` in release builds.
-- Tests: 199 unit tests and 54 end-to-end tests (cookies and popup 17, rules 18, apps 19).
+- **Header rules** (milestone 4): the new-rule form has a "What to capture" choice (Cookies, Request headers, Response headers). `src/core/headers.ts` picks only the named headers out of a request or response (`matchRuleHeaders`); `src/platform/headers.ts` is the only `webRequest` code (observe-only `onSendHeaders` / `onHeadersReceived`, skips Conduit's own requests); the worker keeps the active header rules in memory until storage changes, and reads the full state only on a match. Header rules have no "Capture now". Header names are stored lower case.
+- Manifest permissions: `activeTab`, `alarms`, `cookies`, `storage`, `webRequest`; `optional_host_permissions: ["*://*/*"]`; no `host_permissions` in release builds.
+- Tests: 232 unit tests and 66 end-to-end tests (cookies and popup 17, rules 18, apps 19, headers 12).
 
 ## Verification so far
 
 - `npm run check` passes (format, lint, typecheck, unit tests, build).
-- `npm run test:e2e` passes in two batches (running everything at once is over two minutes locally): `cookies.spec.ts popup.spec.ts rules.spec.ts` (35) and `sinks.spec.ts` (19, including the real automatic retry at about 30 seconds).
+- `npm run test:e2e` passes in batches (running everything at once is over two minutes locally): `cookies.spec.ts popup.spec.ts rules.spec.ts` (35), `sinks.spec.ts` (19, including the real automatic retry at about 30 seconds) and `headers.spec.ts` (12: only the named request or response header is recorded, other headers and the other direction are not, switching a rule off stops it, an app receives only its requested header, export and re-import, accessibility in light and dark).
+- Milestone 4 changed two earlier tests on purpose: header requests used to be shown as "not supported yet", so those two app tests now use a storage request as the still-unsupported example.
 - The tests found and fixed: the discard filter being fed its own message type, the page growing wider than a phone because of the table, a missing silent-drop report for a full queue.
 - Screenshots viewed: review of requests, apps and failure alert (dark, settled), phone width (no sideways overflow).
 - Security pass: all network calls are in `src/platform/sinks.ts` (no credentials, no referrer, no cache, no redirects, timeouts, capped answer size); no unsafe DOM use; no runtime dependencies; release manifest grants no sites; moderate dev-only `minimatch` advisory unchanged.
@@ -25,6 +27,7 @@
   - **Chrome's real permission prompts** for a site (rule creation), for an app and its sites together, and for "Look on this computer". Tests pre-grant `localhost` and `127.0.0.1` through a test-only build flag; releases never do. The owner has not yet reported on a visible Chrome try-out of milestones 1 to 3.
   - **A forced idle stop of the service worker.** The alarm retry works (a failed delivery was resent about 30 seconds later), but Playwright keeps the worker attached, so a real stop and restart is unproven.
   - **An app on another computer, end to end.** Tests cover the https rule, the typed confirmation and the "not on this computer" marker, not a real remote https app.
+  - **Header capture on a real site with Chrome's real prompt.** Tests pre-grant `localhost` and `127.0.0.1`. That a release build (no granted sites) receives no `webRequest` events at all, and that the single site prompt is enough for headers, rests on Chrome's documented behaviour and has not been seen.
   - The real clipboard, `curl`/`wget`/`yt-dlp` against `cookies.txt`, Edge, and CI (not pushed).
 
 ## Decisions so far
@@ -37,7 +40,7 @@
 ## Next steps
 
 1. A person tries the permission flows in a visible Chrome and, if possible, runs the example app: `python examples/reference_sink.py --site <a site you use> --names <a cookie name>`, then Local apps, Look on this computer.
-2. Milestone 4: header capture (US-012): a new rule kind on the same rules, approval, queue and delivery log; adds the `webRequest` permission and a way to approve header requests from the handshake (they are shown today as "not supported yet").
+2. Milestone 5: storage reads and extractors (US-013, US-014). Requests for page storage are still shown by the app review as "not supported yet".
 3. Owner pushes the commits; check CI (it runs the e2e tests, including the example app, which needs Python on the runner; ubuntu-latest has it).
 
 ## Tech debt and brand-kit findings
@@ -62,6 +65,7 @@ See PRD section 10.
 
 ## Session log
 
+- 2026-10-30 (part 7): milestone 4 built test-first: header rule kind (request or response, lower-case names), observe-only `webRequest` capture, handshake `header` requests with a direction, form choice, ADR 0007, example app `--kind header`, 12 e2e tests.
 - 2026-10-30 (part 6): milestone 3 built test-first: address and loopback rules, handshake reader, queue and retry schedule, worker delivery with alarms, Local apps and Delivery log on the rules page, example app, contract and ADR 0006, 54 e2e tests.
 - 2026-10-30 (part 5): milestone 2 (rules, approval, log, kill switch).
 - 2026-10-30 (part 4): milestone 1 (cookie export), ADR 0004.

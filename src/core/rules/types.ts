@@ -12,17 +12,24 @@ export interface SinkDestination {
 
 export type Destination = LogDestination | SinkDestination;
 
+export type RuleKind = 'cookie' | 'header';
+
+/** Whether a header rule looks at what the browser sends or at what it gets back. */
+export type HeaderDirection = 'request' | 'response';
+
 /**
  * An approved statement of what to capture, from where, and where to put it.
  * `approvedAt` is set only when the person approves the rule; it is never read from a file.
  */
 export interface Rule {
   id: string;
-  kind: 'cookie';
-  /** The main domain (or exact host) whose cookies the rule watches, subdomains included. */
+  kind: RuleKind;
+  /** The main domain (or exact host) whose cookies or headers the rule watches, subdomains included. */
   site: string;
-  /** The cookie names to capture. At least one. */
+  /** The cookie or header names to capture. At least one. Header names are lower case. */
   names: string[];
+  /** For a header rule: request or response headers. Cookie rules have none. */
+  direction?: HeaderDirection;
   destination: Destination;
   enabled: boolean;
   createdAt: string;

@@ -1,3 +1,5 @@
+import type { HeaderDirection } from '../rules/types';
+
 export type WantKind = 'cookie' | 'header' | 'storage';
 
 /** One thing an app asks for in its handshake. Nothing happens until the person approves it. */
@@ -7,8 +9,10 @@ export interface Want {
   kind: string;
   /** The site as the app wrote it, for example `https://*.example.com`. */
   origin: string;
-  /** Cookie names (for a cookie request). */
+  /** Cookie or header names. Header names are lower case. */
   names: string[];
+  /** For a header request: request or response headers. */
+  direction?: HeaderDirection;
   /** The app's reason, shown to the person word for word. */
   why: string;
   /** The main domain the request covers, worked out from `origin`. */

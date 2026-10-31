@@ -53,7 +53,6 @@ describe('US-008: reading what an app says about itself', () => {
   it('keeps a request it cannot approve, with the reason, so you can see it', () => {
     const result = parseHandshake(
       shake([
-        { ...cookieWant, id: 'h', kind: 'header', headers: ['X-Token'] },
         { ...cookieWant, id: 's', kind: 'storage' },
         { ...cookieWant, id: 'w', kind: 'weird' },
       ]),
@@ -62,7 +61,6 @@ describe('US-008: reading what an app says about itself', () => {
     expect(result).toMatchObject({
       ok: true,
       wants: [
-        { id: 'h', problem: 'Requests for headers are not supported yet.' },
         { id: 's', problem: 'Requests for page storage are not supported yet.' },
         { id: 'w', problem: 'This kind of request is not supported.' },
       ],

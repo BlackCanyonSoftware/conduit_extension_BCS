@@ -1,4 +1,4 @@
-import { captureBytes, cookieOrigin, matchRuleCookies } from '../capture';
+import { captureBytes, observedCookies, type Observed } from '../capture';
 import type { Cookie } from '../cookies/types';
 import { isRecord } from '../records';
 import { describeRule } from '../rules/describe';
@@ -129,10 +129,22 @@ export async function digestOf(text: string): Promise<string> {
  * The deliveries a rule that sends to an app produces for these cookies. A value that is
  * the same as the last one sent is skipped unless `force` is set ("Send now").
  */
-export async function planSinkDeliveries(
+export function planSinkDeliveries(
   rule: Rule,
   sink: Sink,
   cookies: readonly Cookie[],
+  seen: SeenDigests,
+  context: DeliveryContext,
+  options: { force?: boolean } = {},
+): Promise<{ pending: PendingDelivery[]; seen: SeenDigests }> {
+  return planSinkDeliveriesFor(rule, sink, observedCookies(rule, cookies), seen, context, options);
+}
+
+/** The same for values already picked out by a rule, whether cookies or headers. */
+export async function planSinkDeliveriesFor(
+  rule: Rule,
+  sink: Sink,
+  observed: readonly Observed[],
   seen: SeenDigests,
   context: DeliveryContext,
   options: { force?: boolean } = {},
@@ -141,18 +153,18 @@ export async function planSinkDeliveries(
   const { sinkId, wantId } = rule.destination;
   const known = { ...(seen[rule.id] ?? {}) };
   const pending: PendingDelivery[] = [];
-  for (const cookie of matchRuleCookies(rule, cookies)) {
-    const digest = await digestOf(`${cookie.name}\u0000${cookie.value}`);
-    if (options.force !== true && known[cookie.name] === digest) continue;
-    known[cookie.name] = digest;
-    const data = { [cookie.name]: cookie.value };
+  for (const item of observed) {
+    const digest = await digestOf(`${item.name}\u0000${item.value}`);
+    if (options.force !== true && known[item.name] === digest) continue;
+    known[item.name] = digest;
+    const data = { [item.name]: item.value };
     pending.push({
       id: context.newId(),
       ruleId: rule.id,
       ruleText: describeRule(rule, sink),
       sinkId,
       wantId,
-      origin: cookieOrigin(cookie),
+      origin: item.origin,
       capturedAt: new Date(context.now).toISOString(),
       data,
       bytes: captureBytes(data),

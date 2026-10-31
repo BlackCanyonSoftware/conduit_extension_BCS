@@ -14,12 +14,13 @@ Export your cookies in the format a tool wants, or set up a rule that hands exac
 the values you choose to a local application you trust. Everything stays on your
 machine: no server, no account, no telemetry.
 
-> **Status:** early development (milestone 3). Cookie export, rules with approval, a
+> **Status:** early development (milestone 4). Cookie export, rules for cookies and headers with approval, a
 > kill switch, a capture log and delivery to local apps work in a development build; there is no release yet. Follow the [roadmap](docs/ROADMAP.md).
 
 ## What it will do
 
 - **Export cookies** as Netscape `cookies.txt`, JSON or a `Cookie:` header, per site and per cookie.
+- **Capture named headers** the browser sends or receives, with the same rules and approval as cookies.
 - **Bridge to local apps** through a small, documented HTTP contract any program can implement in a few lines: see [INTEGRATION-CONTRACT.md](docs/INTEGRATION-CONTRACT.md). The app says what it would like and why; you approve what you choose.
 - **Stay readable:** every rule is one sentence (what, from where, to whom), previews are redacted until you reveal them, and a delivery log shows what was sent.
 

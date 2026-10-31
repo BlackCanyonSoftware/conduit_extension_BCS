@@ -1,4 +1,5 @@
 import { siteScopeFor } from '../cookies/site';
+import type { HeaderDirection } from './types';
 
 export const MAX_NAMES = 50;
 export const MAX_NAME_LENGTH = 200;
@@ -44,6 +45,58 @@ export function checkNames(names: readonly string[]): string | undefined {
     }
   }
   return undefined;
+}
+
+/** The characters HTTP allows in a header name. */
+const HEADER_NAME = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+
+/** A message describing what is wrong with a list of header names, or undefined when it is fine. */
+export function checkHeaderNames(names: readonly string[]): string | undefined {
+  if (names.length === 0) return 'Enter at least one header name.';
+  if (names.length > MAX_NAMES) return `Use at most ${String(MAX_NAMES)} header names per rule.`;
+  for (const name of names) {
+    if (name.length > MAX_NAME_LENGTH) {
+      return `A header name can be at most ${String(MAX_NAME_LENGTH)} characters.`;
+    }
+    if (!HEADER_NAME.test(name)) {
+      return `"${name.replace(/[^\x20-\x7e]/g, '?')}" is not a valid header name: use letters, digits and these marks only: - _ . ! # $ % & ' * + ^ \` | ~`;
+    }
+  }
+  return undefined;
+}
+
+/** Header names are not case sensitive; Conduit keeps them in lower case. */
+export function splitHeaderNames(text: string): string[] {
+  return [...new Set(splitNames(text).map((name) => name.toLowerCase()))];
+}
+
+export interface HeaderRuleDraft extends RuleDraft {
+  direction: HeaderDirection;
+}
+
+export type HeaderDraftResult =
+  { ok: true; draft: HeaderRuleDraft } | { ok: false; errors: { site?: string; names?: string } };
+
+/** Checks what the person typed into the new-rule form for a header rule. */
+export function parseHeaderRuleDraft(input: {
+  site: string;
+  names: string;
+  direction: HeaderDirection;
+}): HeaderDraftResult {
+  const errors: { site?: string; names?: string } = {};
+
+  const site = normalizeSite(input.site);
+  if (input.site.trim() === '') errors.site = 'Enter a site, for example example.com.';
+  else if (site === undefined) errors.site = 'That does not look like a website address.';
+
+  const names = splitHeaderNames(input.names);
+  const namesError = checkHeaderNames(names);
+  if (namesError) errors.names = namesError;
+
+  if (errors.site !== undefined || errors.names !== undefined || site === undefined) {
+    return { ok: false, errors };
+  }
+  return { ok: true, draft: { site, names, direction: input.direction } };
 }
 
 /** Checks what the person typed into the new-rule form. */

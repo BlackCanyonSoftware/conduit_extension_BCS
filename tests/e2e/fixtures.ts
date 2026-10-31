@@ -214,6 +214,16 @@ export const test = base.extend<Fixtures>({
         response.end();
         return;
       }
+      // `?resp=value` changes the value of the x-conduit-resp header the site answers with.
+      const resp = address.searchParams.get('resp') ?? 'page-response-value-1';
+      if (address.pathname === '/ping') {
+        // Answers the page's own fetch; sets no cookies.
+        response.setHeader('X-Ping', 'pong');
+        response.end('pong');
+        return;
+      }
+      response.setHeader('X-Conduit-Resp', resp);
+      response.setHeader('X-Other', 'not-asked-for');
       // `?sid=value` lets a test change the value of the sid cookie.
       const sid = address.searchParams.get('sid');
       response.setHeader('Set-Cookie', [
@@ -222,7 +232,11 @@ export const test = base.extend<Fixtures>({
         'token=0123456789abcdefXYZ; Path=/app; Secure',
       ]);
       response.setHeader('Content-Type', 'text/html');
-      response.end('<!doctype html><title>Test site</title><h1>Test site</h1>');
+      // The page asks for /ping with a header of its own; `?req=value` changes its value.
+      response.end(
+        '<!doctype html><title>Test site</title><h1>Test site</h1>' +
+          "<script>fetch('/ping', { headers: { 'X-Conduit-Req': new URLSearchParams(location.search).get('req') ?? 'request-value-1234', 'X-Not-Asked': 'x' } });</script>",
+      );
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const address = server.address();

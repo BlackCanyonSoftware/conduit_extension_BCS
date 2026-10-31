@@ -49,6 +49,7 @@ src/
     cookies/     formats: netscape, json, header string; selection
     rules/       rule model and status, one-sentence summary, validation, import/export
     capture.ts   matching, duplicate-skipping captures, the capped log
+    headers.ts   picks the named headers out of a request or response
     sinks/       address and loopback rules, handshake reader, delivery queue and retry schedule
     redact.ts    first/last four preview
     extract.ts   regex / JSON-path extractors (milestone 5)
@@ -77,8 +78,9 @@ erDiagram
   RULE ||--o{ DELIVERY : logs
   RULE {
     string id
-    string kind "cookie now; header and storage later"
+    string kind "cookie or header; storage later"
     string site "main domain, subdomains included"
+    string direction "header rules only: request or response"
     string[] names
     string destination "log now; a sink in milestone 3"
     bool enabled

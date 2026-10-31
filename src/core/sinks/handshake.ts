@@ -1,5 +1,6 @@
 import { isRecord } from '../records';
-import { checkNames, normalizeSite } from '../rules/validate';
+import type { HeaderDirection } from '../rules/types';
+import { checkHeaderNames, checkNames, normalizeSite } from '../rules/validate';
 import type { Want } from './types';
 
 export type ParsedHandshake =
@@ -11,10 +12,7 @@ const MAX_WANTS = 50;
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
 // A Map, not an object: the kind comes from the app, and a name like "constructor" must not match.
-const UNSUPPORTED_KIND = new Map([
-  ['header', 'Requests for headers are not supported yet.'],
-  ['storage', 'Requests for page storage are not supported yet.'],
-]);
+const UNSUPPORTED_KIND = new Map([['storage', 'Requests for page storage are not supported yet.']]);
 
 /** Control characters become spaces, so an app cannot garble the screen with its name. */
 function printable(text: string): string {
@@ -54,11 +52,20 @@ function readWant(raw: unknown, index: number, seenIds: Set<string>): Want {
   if (seenIds.has(id)) return { ...want, problem: 'Another request already uses this id.' };
   seenIds.add(id);
 
-  if (kind !== 'cookie') {
+  if (kind !== 'cookie' && kind !== 'header') {
     return {
       ...want,
       problem: UNSUPPORTED_KIND.get(kind) ?? 'This kind of request is not supported.',
     };
+  }
+  const isHeader = kind === 'header';
+  const direction = record.direction ?? 'request';
+  if (isHeader && direction !== 'request' && direction !== 'response') {
+    return { ...want, problem: 'The direction must be "request" or "response".' };
+  }
+  if (isHeader) {
+    want.direction = direction as HeaderDirection;
+    want.names = [...new Set(names.map((name) => name.toLowerCase()))];
   }
   if (why.trim() === '') {
     return {
@@ -76,7 +83,7 @@ function readWant(raw: unknown, index: number, seenIds: Set<string>): Want {
   if (site === undefined) {
     return { ...want, problem: 'The site in this request is not a website address.' };
   }
-  const namesProblem = checkNames(names);
+  const namesProblem = isHeader ? checkHeaderNames(want.names) : checkNames(names);
   if (namesProblem) return { ...want, site, problem: namesProblem };
   return { ...want, site };
 }
