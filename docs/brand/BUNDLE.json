@@ -1,0 +1,9 @@
+{
+  "brand": "conduit",
+  "files": {
+    "lockup/banner/lockup-horizontal-dark-banner.png": "005b2a27b16d3664cf07605a8ae5e7d7e260b2299abf5568d9b685790bf0a309",
+    "lockup/banner/lockup-horizontal-light-banner.png": "9bad719e33bda03f9369dfb3c73af6b37ff3aad4f47505c826886928043e3388"
+  },
+  "note": "The readme set of this brand - the two images a repository's front page shows: the banner lockup, light and dark, for a <picture> block that follows the reader's own page colour. Every file with a hash of it. The folder names are part of it: a copy that renames or flattens them is a copy nothing written down describes. Export with: brandkit bundle conduit <folder> --set readme. Check a copy with: brandkit check conduit <folder> --set readme.",
+  "set": "readme"
+}
