@@ -27,7 +27,8 @@ npm run format         # Prettier, write
 
 - `src/manifest.json`: manifest without a version (the build takes it from `package.json`).
 - `src/core/`: pure logic, no browser APIs (`cookies/` formats and site scope, `redact.ts`).
-- `src/platform/`: the only code that touches `chrome.*` (the popup UI in `src/popup/` calls it).
+- `src/platform/`: the only code that touches `chrome.*` (pages and the worker call it).
+- `src/background/` service worker, `src/popup/` and `src/options/` pages, `src/ui/` helpers shared by pages.
 - `scripts/build.mjs`: esbuild entry points live in `ENTRY_POINTS`.
 - `tests/unit/`: Vitest. Name tests after PRD story IDs (`US-001`).
 - `docs/`: PRD, ROADMAP, ARCHITECTURE, DESIGN, INTEGRATION-CONTRACT, `adr/`, HANDOFF.

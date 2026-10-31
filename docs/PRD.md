@@ -198,8 +198,8 @@ issues opened, and third-party apps listing Conduit support.
 ## 10. Open questions
 
 - Q1: Final public name and store namespaces ("Conduit" is the working name).
-- Q2: Brand assets for Conduit are being built; milestone 0 UI work waits on them.
-- Q3: Should the log be capped by size or age by default? (Proposal: 1,000 entries.)
+- Q2: (Resolved) Brand assets are built and bundled.
+- Q3: (Resolved in milestone 2) The capture log keeps the newest 1,000 entries; revisit size limits when sinks arrive.
 
 ## 11. Glossary
 

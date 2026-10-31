@@ -14,8 +14,8 @@ Export your cookies in the format a tool wants, or set up a rule that hands exac
 the values you choose to a local application you trust. Everything stays on your
 machine: no server, no account, no telemetry.
 
-> **Status:** early development (milestone 1). Cookie export works in a development
-> build; there is no release yet. Follow the [roadmap](docs/ROADMAP.md).
+> **Status:** early development (milestone 2). Cookie export, rules with approval, a
+> kill switch and a local capture log work in a development build; there is no release yet. Follow the [roadmap](docs/ROADMAP.md).
 
 ## What it will do
 

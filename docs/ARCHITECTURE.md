@@ -47,16 +47,18 @@ flowchart TB
 src/
   core/          pure logic, no browser APIs (unit-tested)
     cookies/     formats: netscape, json, header string; selection
-    rules/       rule model, one-sentence summary, matching, validation
-    sinks/       contract types, handshake parsing, loopback check
+    rules/       rule model and status, one-sentence summary, validation, import/export
+    capture.ts   matching, duplicate-skipping captures, the capped log
+    sinks/       contract types, handshake parsing, loopback check (milestone 3)
     redact.ts    first/last four preview
-    extract.ts   regex / JSON-path extractors
+    extract.ts   regex / JSON-path extractors (milestone 5)
   platform/      thin wrappers over chrome.* / browser.* (the only code that touches them)
-  background/    service worker: event wiring, alarms, delivery queue
-  popup/         popup UI
-  options/       rules, sinks, log
-  content/       storage-reading content script
-  theme/         brand template CSS bundled from the brand kit
+  background/    service worker: cookie-change capture, capture now, badge; alarms and delivery queue in milestone 3
+  popup/         popup UI: cookies for the active site, rules bar and kill switch
+  options/       rules page: rules, approval, log; sinks in milestone 3
+  ui/            helpers shared by the pages: DOM builder, download, info toggle, theme button, shared.css
+  content/       storage-reading content script (milestone 5)
+  theme/         brand template CSS bundled from the brand kit (generated)
 examples/        reference sink (Python, standard library only)
 tests/           unit, e2e
 docs/            this folder
@@ -74,12 +76,13 @@ erDiagram
   RULE ||--o{ DELIVERY : logs
   RULE {
     string id
-    string kind "cookie | header | storage"
-    string origin
+    string kind "cookie now; header and storage later"
+    string site "main domain, subdomains included"
     string[] names
-    string sinkId
+    string destination "log now; a sink in milestone 3"
     bool enabled
-    datetime approvedAt
+    datetime createdAt
+    datetime approvedAt "set only by the person approving"
   }
   SINK {
     string id
@@ -89,8 +92,10 @@ erDiagram
   }
   CAPTURE {
     string ruleId
-    datetime capturedAt
-    string data
+    datetime at
+    string ruleText "the rule as it read then"
+    map data "name to value"
+    int bytes
   }
   DELIVERY {
     string ruleId
