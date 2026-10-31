@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { themeButtonState } from '../../src/popup/theme-state';
+import { themeButtonState } from '../../src/ui/theme-state';
 
 describe('theme button state (US-015)', () => {
   it('offers the light background while the dark one is showing', () => {

@@ -8,7 +8,8 @@ import {
   hasSiteAccess,
   requestSiteAccess,
 } from '../platform/cookies';
-import { h, icon } from './dom';
+import { h, icon } from '../ui/dom';
+import { downloadText } from '../ui/download';
 
 const FORMATS: { id: ExportFormat; label: string }[] = [
   { id: 'netscape', label: 'cookies.txt' },
@@ -214,12 +215,7 @@ function showCookies(root: HTMLElement, site: string, cookies: Cookie[]): void {
   download.addEventListener('click', () => {
     const file = build();
     if (!file) return;
-    const url = URL.createObjectURL(new Blob([file.text], { type: file.mime }));
-    const link = h('a', { attrs: { href: url, download: file.filename } });
-    link.click();
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
+    downloadText(file.filename, file.text, file.mime);
     report(`Saved ${file.filename}.`);
   });
 

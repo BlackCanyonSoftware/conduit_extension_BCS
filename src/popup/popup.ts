@@ -1,6 +1,6 @@
 import { mountCookiePanel } from './cookie-panel';
-import { initInfoToggles } from './info-toggle';
-import { syncThemeButton } from './theme-state';
+import { initInfoToggles } from '../ui/info-toggle';
+import { syncThemeButton } from '../ui/theme-state';
 
 syncThemeButton();
 initInfoToggles();
