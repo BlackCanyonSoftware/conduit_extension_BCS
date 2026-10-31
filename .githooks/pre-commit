@@ -1,0 +1,12 @@
+#!/bin/sh
+# Formats-check and lints the files being committed. Fix with `npm run format`.
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+echo "$staged" | xargs npx prettier --check --ignore-unknown
+
+lintable=$(echo "$staged" | grep -E '\.(ts|js|mjs)$' || true)
+[ -z "$lintable" ] && exit 0
+echo "$lintable" | xargs npx eslint

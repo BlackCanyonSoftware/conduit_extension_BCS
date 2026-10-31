@@ -1,0 +1,6 @@
+{
+  "manifest_version": 3,
+  "name": "Conduit",
+  "description": "Export your own browser's cookies and hand approved data to local apps you choose.",
+  "minimum_chrome_version": "120"
+}
