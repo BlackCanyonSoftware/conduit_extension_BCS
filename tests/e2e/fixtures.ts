@@ -14,6 +14,8 @@ interface Fixtures {
   openPopup: (siteUrl?: string) => Promise<Page>;
   /** A local test website that sets three cookies, one of them HttpOnly. */
   site: { url: string };
+  /** Opens Conduit's rules and log page in a tab. */
+  openOptions: () => Promise<Page>;
 }
 
 /**
@@ -77,11 +79,28 @@ export const test = base.extend<Fixtures>({
     });
   },
 
+  openOptions: async ({ context, extensionId }, use) => {
+    await use(async () => {
+      const page = await context.newPage();
+      await page.goto(`chrome-extension://${extensionId}/options/options.html`);
+      return page;
+    });
+  },
+
   // eslint-disable-next-line no-empty-pattern
   site: async ({}, use) => {
-    const server = createServer((_request, response) => {
+    const server = createServer((request, response) => {
+      const address = new URL(request.url ?? '/', 'http://localhost');
+      if (address.pathname === '/favicon.ico') {
+        // Browsers ask for this after a page loads; it must not touch the cookies.
+        response.statusCode = 404;
+        response.end();
+        return;
+      }
+      // `?sid=value` lets a test change the value of the sid cookie.
+      const sid = address.searchParams.get('sid');
       response.setHeader('Set-Cookie', [
-        'sid=abc123def456ghi789; Path=/; HttpOnly; SameSite=Lax',
+        `sid=${sid ?? 'abc123def456ghi789'}; Path=/; HttpOnly; SameSite=Lax`,
         'theme=dark; Path=/; Max-Age=31536000',
         'token=0123456789abcdefXYZ; Path=/app; Secure',
       ]);
