@@ -4,3 +4,4 @@ coverage/
 package-lock.json
 src/theme/
 docs/brand/
+tests/fixtures/

@@ -1,0 +1,7 @@
+# Netscape HTTP Cookie File
+# https://curl.se/docs/http-cookies.html
+# Exported by Conduit. Treat this file like a password.
+
+#HttpOnly_www.example.com	FALSE	/	TRUE	0	sid	abc123
+.example.com	TRUE	/	FALSE	1893456000	theme	dark
+.example.com	TRUE	/app	TRUE	1900000000	prefs	a=b

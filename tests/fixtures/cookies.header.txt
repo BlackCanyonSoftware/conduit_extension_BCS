@@ -1,0 +1,1 @@
+Cookie: sid=abc123; theme=dark; prefs=a=b
