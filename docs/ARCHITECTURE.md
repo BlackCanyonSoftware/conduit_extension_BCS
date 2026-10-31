@@ -2,14 +2,14 @@
 
 ## Stack and rationale
 
-| Choice | Why | Alternative considered |
-|---|---|---|
-| TypeScript (`strict`) | Types for browser-API payloads and the sink contract | Plain JavaScript (fewer tools, weaker guarantees) |
-| esbuild | One small dependency, fast, easy to read the output | Vite/WXT (more features than a small extension needs) |
-| Vanilla DOM for popup and options | Few moving parts to audit | Preact/Svelte (more dependencies) |
-| Vitest | Fast unit tests that share the esbuild toolchain | Jest |
-| Playwright | Loads the real extension in Chromium for end-to-end tests | Puppeteer |
-| Brand template CSS | Shared Black Canyon look and tested contrast | Hand-written styles |
+| Choice                            | Why                                                       | Alternative considered                                |
+| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------- |
+| TypeScript (`strict`)             | Types for browser-API payloads and the sink contract      | Plain JavaScript (fewer tools, weaker guarantees)     |
+| esbuild                           | One small dependency, fast, easy to read the output       | Vite/WXT (more features than a small extension needs) |
+| Vanilla DOM for popup and options | Few moving parts to audit                                 | Preact/Svelte (more dependencies)                     |
+| Vitest                            | Fast unit tests that share the esbuild toolchain          | Jest                                                  |
+| Playwright                        | Loads the real extension in Chromium for end-to-end tests | Puppeteer                                             |
+| Brand template CSS                | Shared Black Canyon look and tested contrast              | Hand-written styles                                   |
 
 See [ADR 0001](adr/0001-stack.md).
 

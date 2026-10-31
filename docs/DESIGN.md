@@ -23,13 +23,13 @@ Brand status: the Conduit brand is being built; this file is completed when
 
 ## Screens
 
-| Screen | Purpose |
-|---|---|
+| Screen         | Purpose                                                   |
+| -------------- | --------------------------------------------------------- |
 | Popup: Cookies | Site cookie list, selection, format picker, copy/download |
-| Popup: Status | Kill switch, active rules count, last deliveries |
-| Options: Rules | Create, approve, disable, import/export rules |
-| Options: Sinks | Add sinks, see what each asks for, loopback marker |
-| Options: Log | Delivery and capture log, download |
+| Popup: Status  | Kill switch, active rules count, last deliveries          |
+| Options: Rules | Create, approve, disable, import/export rules             |
+| Options: Sinks | Add sinks, see what each asks for, loopback marker        |
+| Options: Log   | Delivery and capture log, download                        |
 
 ## States
 
