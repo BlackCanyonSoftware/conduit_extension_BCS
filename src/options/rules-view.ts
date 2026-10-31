@@ -4,7 +4,7 @@ import { exportRules, importRules, RuleImportError } from '../core/rules/transfe
 import { ruleStatus, type Rule, type RuleStatus } from '../core/rules/types';
 import { parseRuleDraft, type RuleDraft } from '../core/rules/validate';
 import { requestSiteAccess } from '../platform/cookies';
-import { requestCaptureNow } from '../platform/extension';
+import { requestCaptureNow, requestDiscard } from '../platform/extension';
 import { saveKillSwitch, saveRules, type StoredState } from '../platform/storage';
 import { h, icon, renderKeepingFocus } from '../ui/dom';
 import { downloadText } from '../ui/download';
@@ -28,7 +28,25 @@ export interface RulesView {
 
 /** The rules section: toolbar, new-rule form, kill-switch notice and the list of rules (US-004, US-005, US-007). */
 export function mountRules(root: HTMLElement): RulesView {
-  let current: StoredState = { rules: [], killSwitch: false, log: [] };
+  let current: StoredState = {
+    rules: [],
+    killSwitch: false,
+    log: [],
+    sinks: [],
+    queue: [],
+    deliveries: [],
+  };
+
+  /** The rule as one sentence, naming the app it sends to. */
+  const sentence = (rule: Rule): string =>
+    describeRule(
+      rule,
+      rule.destination.kind === 'sink'
+        ? current.sinks.find(
+            (sink) => rule.destination.kind === 'sink' && sink.id === rule.destination.sinkId,
+          )
+        : undefined,
+    );
   const confirmingDelete = new Set<string>();
   let reviewing: string | undefined;
 
@@ -346,13 +364,21 @@ export function mountRules(root: HTMLElement): RulesView {
             on: {
               click: () => {
                 status.textContent = 'Capturing…';
+                const sends = rule.destination.kind === 'sink';
                 void requestCaptureNow(rule.id).then(
                   (reply) => {
-                    status.textContent = reply.ok
-                      ? reply.captured === 0
-                        ? 'Nothing new to capture: the values have not changed.'
-                        : `Captured ${String(reply.captured)} new ${reply.captured === 1 ? 'value' : 'values'}.`
-                      : reply.reason;
+                    if (!reply.ok) {
+                      status.textContent = reply.reason;
+                    } else if (reply.count === 0) {
+                      status.textContent = sends
+                        ? 'Nothing to send: the rule found no matching cookies.'
+                        : 'Nothing new to capture: the values have not changed.';
+                    } else {
+                      const noun = reply.count === 1 ? 'value' : 'values';
+                      status.textContent = sends
+                        ? `Sent ${String(reply.count)} ${noun}. See the delivery log for the result.`
+                        : `Captured ${String(reply.count)} new ${noun}.`;
+                    }
                   },
                   (error: unknown) => {
                     status.textContent = message(error, 'Capture failed.');
@@ -361,7 +387,7 @@ export function mountRules(root: HTMLElement): RulesView {
               },
             },
           },
-          'Capture now',
+          rule.destination.kind === 'sink' ? 'Send now' : 'Capture now',
         ),
       );
     }
@@ -376,9 +402,11 @@ export function mountRules(root: HTMLElement): RulesView {
             on: {
               click: () => {
                 confirmingDelete.delete(rule.id);
-                void saveRules(current.rules.filter((item) => item.id !== rule.id)).then(() => {
-                  status.textContent = 'Rule deleted.';
-                });
+                void saveRules(current.rules.filter((item) => item.id !== rule.id))
+                  .then(() => requestDiscard({ ruleId: rule.id }))
+                  .then(() => {
+                    status.textContent = 'Rule deleted.';
+                  });
               },
             },
           },
@@ -421,7 +449,7 @@ export function mountRules(root: HTMLElement): RulesView {
     const body = h(
       'div',
       { class: 'card-b' },
-      h('p', { class: 'rule-text' }, describeRule(rule)),
+      h('p', { class: 'rule-text' }, sentence(rule)),
       h(
         'div',
         { class: 'rule-meta' },
@@ -435,7 +463,7 @@ export function mountRules(root: HTMLElement): RulesView {
           'div',
           { class: 'rule-actions' },
           approvalPanel({
-            text: describeRule(rule),
+            text: sentence(rule),
             site: rule.site,
             confirm: 'Approve and switch on',
             onApprove: async () => {

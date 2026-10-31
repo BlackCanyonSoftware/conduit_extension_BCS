@@ -1,23 +1,42 @@
 import { readStoredLog, type CaptureEntry } from '../core/capture';
 import { readStoredRules } from '../core/rules/transfer';
 import type { Rule } from '../core/rules/types';
+import {
+  readStoredDeliveries,
+  readStoredQueue,
+  readStoredSinks,
+  type DeliveryEntry,
+  type PendingDelivery,
+  type SeenDigests,
+} from '../core/sinks/delivery';
+import type { Sink } from '../core/sinks/types';
 
 /** Everything Conduit keeps in the browser's local extension storage. */
 export interface StoredState {
   rules: Rule[];
-  /** While true, no rule captures anything. */
+  /** While true, nothing is captured and nothing is sent. */
   killSwitch: boolean;
   log: CaptureEntry[];
+  sinks: Sink[];
+  /** Captured values waiting to be sent to an app. */
+  queue: PendingDelivery[];
+  /** What happened to each delivery. Never holds the values. */
+  deliveries: DeliveryEntry[];
 }
 
 export type StateKey = keyof StoredState;
 
+const STATE_KEYS: StateKey[] = ['rules', 'killSwitch', 'log', 'sinks', 'queue', 'deliveries'];
+
 export async function loadState(): Promise<StoredState> {
-  const stored = await chrome.storage.local.get(['rules', 'killSwitch', 'log']);
+  const stored = await chrome.storage.local.get(STATE_KEYS);
   return {
     rules: readStoredRules(stored.rules),
     killSwitch: stored.killSwitch === true,
     log: readStoredLog(stored.log),
+    sinks: readStoredSinks(stored.sinks),
+    queue: readStoredQueue(stored.queue),
+    deliveries: readStoredDeliveries(stored.deliveries),
   };
 }
 
@@ -33,11 +52,33 @@ export function saveLog(log: readonly CaptureEntry[]): Promise<void> {
   return chrome.storage.local.set({ log });
 }
 
+export function saveSinks(sinks: readonly Sink[]): Promise<void> {
+  return chrome.storage.local.set({ sinks });
+}
+
+export function saveQueue(queue: readonly PendingDelivery[]): Promise<void> {
+  return chrome.storage.local.set({ queue });
+}
+
+export function saveDeliveries(deliveries: readonly DeliveryEntry[]): Promise<void> {
+  return chrome.storage.local.set({ deliveries });
+}
+
+/** Digests of values already sent. Only the service worker reads and writes this. */
+export async function loadSeen(): Promise<SeenDigests> {
+  const { seen } = await chrome.storage.local.get('seen');
+  return typeof seen === 'object' && seen !== null ? (seen as SeenDigests) : {};
+}
+
+export function saveSeen(seen: SeenDigests): Promise<void> {
+  return chrome.storage.local.set({ seen });
+}
+
 /** Calls `listener` with the parts of the state that changed, from any page or the worker. */
 export function onStateChanged(listener: (changed: StateKey[]) => void): void {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    const keys = (['rules', 'killSwitch', 'log'] as const).filter((key) => key in changes);
+    const keys = STATE_KEYS.filter((key) => key in changes);
     if (keys.length > 0) listener(keys);
   });
 }
