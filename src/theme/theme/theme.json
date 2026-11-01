@@ -316,5 +316,5 @@
     "warn": "...and a warning. The same red, because two reds a few degrees apart are not distinguishable - a warning is told apart by its icon and the weight of its edge",
     "warn_bg": "the wash behind a warning - a quieter ground"
   },
-  "typeface": "Nunito"
+  "typeface": "Sora"
 }

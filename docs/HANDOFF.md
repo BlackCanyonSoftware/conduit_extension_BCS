@@ -68,6 +68,7 @@ See PRD section 10.
 
 ## Session log
 
+- 2026-11-01: brand re-synced from brandkit 1.49.0 (`brandkit bundle conduit src/theme` and `--set readme docs/brand`): typeface changed from Nunito to Sora. Old Nunito files removed by hand (bundle does not delete them). Our CSS names no font family (only `var(--mono)`); full e2e (82) and unit (306) tests pass.
 - 2026-10-30 (part 8): milestone 5 built test-first: extractors (pattern or JSON path, checked and bounded), storage rule kind read with `chrome.scripting`, new `scripting` permission, form choices for storage and "Keep", handshake `storage` kind and `extract`, example app options, ADR 0008, 16 e2e tests.
 - 2026-10-30 (part 7): milestone 4 built test-first: header rule kind (request or response, lower-case names), observe-only `webRequest` capture, handshake `header` requests with a direction, form choice, ADR 0007, example app `--kind header`, 12 e2e tests.
 - 2026-10-30 (part 6): milestone 3 built test-first: address and loopback rules, handshake reader, queue and retry schedule, worker delivery with alarms, Local apps and Delivery log on the rules page, example app, contract and ADR 0006, 54 e2e tests.

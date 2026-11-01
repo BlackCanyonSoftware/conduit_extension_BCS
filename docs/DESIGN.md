@@ -14,7 +14,7 @@ generated theme, fonts, icons and component styles, bundled into
 
 Key facts about the brand (the full reference is `src/theme/BRAND.md`):
 
-- **Type:** Nunito, loaded through `template/fonts.css`; never named in our own CSS.
+- **Type:** Sora, loaded through `template/fonts.css`; never named in our own CSS.
 - **Colour:** a violet brand colour (`#a450b6`) with a cool-blue second hue, light and dark palettes, all measured for contrast. Colours are tokens (`var(--accent)`, `var(--card)` and so on); no hex values in our code.
 - **Sheets, in order:** `theme/theme.css`, then `template/` `tokens.css`, `fonts.css`, `base.css`, `components.css`, `layout.css`; our own `popup.css` last and for layout only.
 - **Icons:** the brand sprite, `theme/ui/icons.svg` (for example `#i-info`, `#i-sun`, `#i-moon`), drawn on the `.icon` class.

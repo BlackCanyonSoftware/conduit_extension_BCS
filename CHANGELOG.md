@@ -5,6 +5,10 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Brand assets re-synced from brandkit 1.49.0: the typeface is now Sora, loaded through the brand's `fonts.css` with the `sora.woff` file shipped beside it.
+
 ### Added
 
 - Storage reads: a rule can capture named localStorage or sessionStorage keys from a site, read when a page finishes loading and on "Capture now". Only the keys you name are read.
