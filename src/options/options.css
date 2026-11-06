@@ -46,7 +46,7 @@
 
 .rule-text {
   margin: 0 0 var(--s-2);
-  font-weight: 700;
+  font-size: var(--fs-md);
   overflow-wrap: anywhere;
 }
 
@@ -74,30 +74,15 @@
   color: var(--mute);
 }
 
-.log-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-sm);
-}
-
-.log-table th,
+/* The brand's table sets the row height, padding and header; log rows run to several lines. */
 .log-table td {
-  padding: var(--s-2) var(--s-3);
-  text-align: start;
+  padding-block: var(--s-3);
   vertical-align: top;
-  border-bottom: 1px solid var(--line);
 }
 
 .log-table code {
   font-family: var(--mono);
   overflow-wrap: anywhere;
-}
-
-.log-table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--line-tint);
-  border-radius: var(--r-md);
-  background: var(--card);
 }
 
 .app-name {

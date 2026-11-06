@@ -14,11 +14,14 @@ generated theme, fonts, icons and component styles, bundled into
 
 Key facts about the brand (the full reference is `src/theme/BRAND.md`):
 
-- **Type:** Sora, loaded through `template/fonts.css`; never named in our own CSS.
+- **Design standard:** **IBM Carbon**, and nothing else (brandkit 1.56.1, from the design-standards rollout, kit 1.56.0). Conduit is a public product, so it never takes Apple's patterns. Carbon means square corners, depth by background tone (`.card` layers, no resting shadows), 40 px controls, filled fields with a bottom rule, the productive type scale in regular weight, and an inline notification as a tint with a 3 px stripe. The rules are in `src/theme/BRAND.md` (_The design standard_) and the library's `docs/standards/carbon.md`; the regenerated `tokens.css`, `components.css` and `layout.css` supply them, and our own CSS uses those tokens and classes rather than retyping a radius, size, weight or shadow.
+- **Type:** named in Sora, read in Public Sans, loaded through `template/fonts.css` (`--font-display` is Sora, `--font` is Public Sans); never named in our own CSS. Carbon was drawn around IBM Plex Sans; reading in Public Sans is allowed by the brand.
 - **Colour:** a violet brand colour (`#a450b6`) with a cool-blue second hue, light and dark palettes, all measured for contrast. Colours are tokens (`var(--accent)`, `var(--card)` and so on); no hex values in our code.
 - **Sheets, in order:** `theme/theme.css`, then `template/` `tokens.css`, `fonts.css`, `base.css`, `components.css`, `layout.css`; our own `popup.css` last and for layout only.
 - **Icons:** the brand sprite, `theme/ui/icons.svg` (for example `#i-info`, `#i-sun`, `#i-moon`), drawn on the `.icon` class.
 - **Refreshing:** the bundle is generated. Re-run `brandkit bundle conduit src/theme` (and `--set readme` into `docs/brand`) when the brand changes; never edit those files by hand. `brandkit check` reports drift. `src/theme/` and `docs/brand/` are excluded from Prettier and ESLint for that reason.
+
+Carbon in our own pages: boxes are the brand's `.card` (the popup's cookie list and rules bar, the log tables inside `.table-wrap`), tables use the brand's `table` rules, the (i) panel is a Carbon inline notification (`.info-panel`: tint plus a 3 px stripe), field errors are 12 px helper text, and nothing of ours sets a font weight. Only layout widths are ours (the 380 px popup, the 820 px rules page). The three contrast overrides in `src/ui/shared.css` are kept (see the roadmap's tech debt).
 
 Known quirk: the brand's `theme-switch.js` only updates the toggle's label and `aria-pressed` after a click, so `src/popup/theme-state.ts` aligns them on load.
 

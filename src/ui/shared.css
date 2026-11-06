@@ -6,11 +6,11 @@
   display: none !important;
 }
 
+/* Carbon's inline notification: a tint with a stripe on the near edge and nothing else. */
 .info-panel {
   margin-block-start: var(--s-3);
   padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--line-tint);
-  border-radius: var(--r-md);
+  border-inline-start: 3px solid var(--info);
   background: var(--info-bg);
   font-size: var(--fs-sm);
 }
@@ -29,8 +29,7 @@
   gap: var(--s-2);
   margin: 0;
   color: var(--bad);
-  font-size: var(--fs-sm);
-  font-weight: 700;
+  font-size: var(--fs-xs);
 }
 
 /* Brand pairings that measure just under WCAG AA, set in `ink` instead (see docs/ROADMAP.md,
@@ -41,4 +40,16 @@
 .btn.ghost,
 .btn.ghost:hover {
   color: var(--ink);
+}
+
+/* Carbon puts the quiet text colour (`mute`) on the card layer, where it measures 4.21:1 in dark
+   (`#98769d` on `#211f22`) against the 4.5:1 AA needs. Inside a card, lift it part of the way
+   toward `ink` (5.7:1 there) until the kit's pairing is fixed. The copy of the brand's own value is
+   taken at the root, because a property cannot be defined in terms of itself. */
+:root {
+  --mute-brand: var(--mute);
+}
+
+.card {
+  --mute: color-mix(in srgb, var(--mute-brand) 70%, var(--ink));
 }

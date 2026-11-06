@@ -235,7 +235,7 @@ function showCookies(root: HTMLElement, site: string, cookies: Cookie[]): void {
     ),
     h(
       'ul',
-      { class: 'list popup-cookies', attrs: { 'aria-label': `Cookies for ${site}` } },
+      { class: 'list card popup-cookies', attrs: { 'aria-label': `Cookies for ${site}` } },
       ...rows,
     ),
     h(

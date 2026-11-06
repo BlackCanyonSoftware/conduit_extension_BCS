@@ -53,9 +53,6 @@ body.popup {
 .popup-cookies {
   max-height: 170px;
   overflow-y: auto;
-  border: 1px solid var(--line-tint);
-  border-radius: var(--r-md);
-  background: var(--card);
 }
 
 .popup-cookies li.cookie-row {
@@ -67,7 +64,6 @@ body.popup {
 
 .cookie-name span {
   overflow-wrap: anywhere;
-  font-weight: 700;
 }
 
 .popup-value {
@@ -108,9 +104,6 @@ body.popup {
   gap: var(--s-2);
   margin-block-end: var(--s-3);
   padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line-tint);
-  border-radius: var(--r-md);
-  background: var(--card);
 }
 
 .rules-bar-actions {

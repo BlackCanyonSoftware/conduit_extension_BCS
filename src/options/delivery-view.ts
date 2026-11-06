@@ -95,7 +95,7 @@ export function mountDeliveries(root: HTMLElement): DeliveryView {
           ? h('p', { class: 'options-empty' }, 'Nothing sent yet.')
           : h(
               'div',
-              { class: 'log-table-wrap' },
+              { class: 'table-wrap card' },
               h(
                 'table',
                 { class: 'log-table', attrs: { 'aria-label': 'Delivery log' } },

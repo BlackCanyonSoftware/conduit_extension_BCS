@@ -104,7 +104,7 @@ export function mountLog(root: HTMLElement): LogView {
           ? h('p', { class: 'options-empty' }, 'Nothing captured yet.')
           : h(
               'div',
-              { class: 'log-table-wrap' },
+              { class: 'table-wrap card' },
               h(
                 'table',
                 { class: 'log-table', attrs: { 'aria-label': 'Capture log' } },
