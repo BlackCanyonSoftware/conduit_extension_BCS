@@ -58,7 +58,7 @@ npm run format         # Prettier, write
 
 ## Working agreements
 
-- **CI is off on GitHub and checks run locally.** A workflow that takes over 10 minutes is disabled and run locally instead. This one is disabled (its end-to-end step ran about 20 minutes, then failed). Do not re-enable it without being asked; run `npm run check` and `npm run test:e2e` here, and report what you ran.
+- **CI runs the same checks as `npm run check` plus the end-to-end tests.** A CI run that takes over 10 minutes gets disabled on GitHub and the checks run locally instead; keep it under that (the whole suite takes about 3 minutes). Run `npm run check` and `npm run test:e2e` here before committing, and report what you ran.
 - Report only what you ran and observed; mark anything unverified.
 - Never weaken, skip or delete a test, or bypass a hook, to get a passing run.
 - Label placeholders and list them in `docs/HANDOFF.md`.

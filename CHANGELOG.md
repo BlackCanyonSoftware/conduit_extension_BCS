@@ -7,7 +7,6 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- The GitHub Actions workflow is switched off because its end-to-end step took about 20 minutes; checks run locally with `npm run check` and `npm run test:e2e`.
 - The interface follows the IBM Carbon design standard from the brand kit (1.56.1): square corners, layered backgrounds instead of borders and shadows, regular-weight text in the standard's type scale, 40 px controls. The body face is now Public Sans, with Sora kept for headings and the name.
 - Brand assets re-synced from brandkit 1.49.0: the typeface is now Sora, loaded through the brand's `fonts.css` with the `sora.woff` file shipped beside it.
 

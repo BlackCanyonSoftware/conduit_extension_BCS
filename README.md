@@ -66,10 +66,6 @@ The end-to-end tests need Playwright's Chromium once: `npx playwright install ch
 
 `npm ci` also points git at `.githooks/`, whose pre-commit hook checks formatting and lint on staged files.
 
-## Checks run locally
-
-The GitHub Actions workflow (`.github/workflows/ci.yml`) is switched off, because its end-to-end step ran for about 20 minutes and then failed. Run `npm run check` and `npm run test:e2e` on your own machine before pushing. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Project layout
 
 ```

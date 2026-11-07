@@ -45,7 +45,7 @@
 
 1. A person tries the permission flows in a visible Chrome and, if possible, runs the example app: `python examples/reference_sink.py --site <a site you use> --names <a cookie name>`, then Local apps, Look on this computer.
 2. Milestone 6: Firefox (US-017): compatibility layer and signed XPI route. Known Firefox differences: `extraHeaders` in `webRequest` listeners, `chrome.scripting` (use `browser.*` or the polyfill), optional host permissions.
-3. Owner pushes the commits. CI is disabled on GitHub (2026-11-07), so there is nothing to check there: the checks run locally.
+3. Owner pushes the commits; CI is on again (see the Gotchas entry about it) and should finish in a few minutes. If a run goes over 10 minutes, disable the workflow and run locally.
 
 ## Tech debt and brand-kit findings
 
@@ -56,12 +56,12 @@ See "Tech debt" in `docs/ROADMAP.md`: Public Suffix List for site detection; par
 - **Packaged-app quirk on the owner's machine:** the Claude desktop app runs as a packaged Windows app, so `npx playwright install` puts browsers in a virtualized folder Node cannot spawn from (`spawn UNKNOWN`). Workaround: a copy of `chromium-1248` in `.browsers/` (gitignored) and `export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browsers"` before `npm run test:e2e`. Not needed in CI or on a normal machine.
 - Playwright's text locators match substrings: "Back" also matches "Switch to a dark background". Use `exact: true` or a more specific locator.
 - Writing long scripts through the shell here sometimes fails to parse and can mangle non-ASCII text; put patch scripts in a file first, and use the editor tools for text with characters like the ellipsis.
-- Node 26 is installed locally; `.nvmrc` and the (disabled) workflow use 22.
+- Node 26 is installed locally; `.nvmrc` and the workflow use 22.
 - `brandkit` is not pip-installed; run it from `C:\Users\Kpier\Documents\Brand Logos` with `PYTHONPATH=src python -m brandkit ...`.
 - A hook in the owner's Claude setup requires `timeout N` as the first word of long-running commands, and rejects an env assignment before `timeout` (use `export` first). Tool timeouts over two minutes are refused, so split long test runs.
 - Show names and values only through `textContent`, never `innerHTML`.
 - The test site answers `/favicon.ico` with 404 and no cookies; otherwise Chrome's favicon request resets the cookie and adds stray captures.
-- **CI is disabled on GitHub** (`gh workflow disable`, 2026-11-07). Its last four runs each took 20 to 23 minutes: install, format, lint, type check, unit tests and build finished in about a minute, then `npm run test:e2e` ran about 20 minutes and failed. The rule is that a CI run over 10 minutes is switched off and run locally. **Cause found and fixed (2026-11-07):** all 32 failures were the same thing: the test passed, then the `site` fixture's teardown hung until the 30 s test timeout, because `server.close()` waits for the browser's keep-alive connections (the 82 tests then took 20 minutes of timeouts). The fixtures now call `server.closeAllConnections()` when closing the test site and the test app. Locally the whole suite passes in 2.7 minutes. Not yet seen on a GitHub runner (the workflow is still disabled): re-enable it only after a run there finishes under 10 minutes.
+- **CI** (`.github/workflows/ci.yml`) was disabled for a day (2026-11-07) because its e2e step took about 20 minutes and failed: each of 32 tests passed, then hung 30 s in the `site` fixture's teardown, because `server.close()` waits for the browser's keep-alive connections. The fixtures now call `server.closeAllConnections()`, the whole suite passes locally in 2.7 minutes, and the workflow was re-enabled on the owner's say-so (2026-11-07). **Not yet seen on a GitHub runner with the fix** (it is not pushed). The rule: a CI run over 10 minutes is disabled and run locally. Playwright `workers` stays at 1: a few tests use fixed ports and the real-alarm test needs a quiet machine.
 
 ## Open questions
 
