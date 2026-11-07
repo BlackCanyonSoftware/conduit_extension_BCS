@@ -69,6 +69,8 @@ export async function startSink(port = 0): Promise<TestSink> {
         server.close(() => {
           resolve();
         });
+        // The browser keeps connections open between requests; close() alone waits for them.
+        server.closeAllConnections();
       }),
   };
   const server = createServer((request, response) => {
@@ -249,7 +251,12 @@ export const test = base.extend<Fixtures>({
     const address = server.address();
     if (address === null || typeof address === 'string') throw new Error('test server has no port');
     await use({ url: `http://localhost:${String(address.port)}/` });
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise((resolve) => {
+      server.close(resolve);
+      // The browser keeps connections open between requests (and this fixture is torn down
+      // before the browser is), so close() alone can wait forever and time the test out.
+      server.closeAllConnections();
+    });
   },
 });
 
