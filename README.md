@@ -50,21 +50,25 @@ npm ci
 npm run check
 ```
 
-| Script                 | What it does                                                     |
-| ---------------------- | ---------------------------------------------------------------- |
-| `npm run build`        | Builds the unpacked extension into `dist/`                       |
-| `npm run dev`          | Rebuilds `dist/` whenever `src/` changes                         |
-| `npm test`             | Unit tests (Vitest)                                              |
-| `npm run test:e2e`     | Builds, then runs the Playwright tests in headless Chromium      |
-| `npm run lint`         | ESLint (strict, type-aware)                                      |
-| `npm run typecheck`    | TypeScript `--noEmit`                                            |
-| `npm run format`       | Prettier, write                                                  |
-| `npm run format:check` | Prettier, check                                                  |
-| `npm run check`        | Format check, lint, type check, tests and build, as CI runs them |
+| Script                 | What it does                                                |
+| ---------------------- | ----------------------------------------------------------- |
+| `npm run build`        | Builds the unpacked extension into `dist/`                  |
+| `npm run dev`          | Rebuilds `dist/` whenever `src/` changes                    |
+| `npm test`             | Unit tests (Vitest)                                         |
+| `npm run test:e2e`     | Builds, then runs the Playwright tests in headless Chromium |
+| `npm run lint`         | ESLint (strict, type-aware)                                 |
+| `npm run typecheck`    | TypeScript `--noEmit`                                       |
+| `npm run format`       | Prettier, write                                             |
+| `npm run format:check` | Prettier, check                                             |
+| `npm run check`        | Format check, lint, type check, tests and build             |
 
 The end-to-end tests need Playwright's Chromium once: `npx playwright install chromium`.
 
 `npm ci` also points git at `.githooks/`, whose pre-commit hook checks formatting and lint on staged files.
+
+## Checks run locally
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) is switched off, because its end-to-end step ran for about 20 minutes and then failed. Run `npm run check` and `npm run test:e2e` on your own machine before pushing. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project layout
 

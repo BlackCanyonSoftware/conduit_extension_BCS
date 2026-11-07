@@ -32,7 +32,7 @@
   - **An app on another computer, end to end.** Tests cover the https rule, the typed confirmation and the "not on this computer" marker, not a real remote https app.
   - **Header capture on a real site with Chrome's real prompt.** Tests pre-grant `localhost` and `127.0.0.1`. That a release build (no granted sites) receives no `webRequest` events at all, and that the single site prompt is enough for headers, rests on Chrome's documented behaviour and has not been seen.
   - **Storage reads on a real site with Chrome's real prompts**, and live behaviour on single-page apps that write storage after loading (see the roadmap).
-  - The real clipboard, `curl`/`wget`/`yt-dlp` against `cookies.txt`, Edge, and CI (not pushed).
+  - The real clipboard, `curl`/`wget`/`yt-dlp` against `cookies.txt`, and Edge.
 
 ## Decisions so far
 
@@ -45,7 +45,7 @@
 
 1. A person tries the permission flows in a visible Chrome and, if possible, runs the example app: `python examples/reference_sink.py --site <a site you use> --names <a cookie name>`, then Local apps, Look on this computer.
 2. Milestone 6: Firefox (US-017): compatibility layer and signed XPI route. Known Firefox differences: `extraHeaders` in `webRequest` listeners, `chrome.scripting` (use `browser.*` or the polyfill), optional host permissions.
-3. Owner pushes the commits; check CI (it runs the e2e tests, including the example app, which needs Python on the runner; ubuntu-latest has it).
+3. Owner pushes the commits. CI is disabled on GitHub (2026-11-07), so there is nothing to check there: the checks run locally.
 
 ## Tech debt and brand-kit findings
 
@@ -56,12 +56,12 @@ See "Tech debt" in `docs/ROADMAP.md`: Public Suffix List for site detection; par
 - **Packaged-app quirk on the owner's machine:** the Claude desktop app runs as a packaged Windows app, so `npx playwright install` puts browsers in a virtualized folder Node cannot spawn from (`spawn UNKNOWN`). Workaround: a copy of `chromium-1248` in `.browsers/` (gitignored) and `export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browsers"` before `npm run test:e2e`. Not needed in CI or on a normal machine.
 - Playwright's text locators match substrings: "Back" also matches "Switch to a dark background". Use `exact: true` or a more specific locator.
 - Writing long scripts through the shell here sometimes fails to parse and can mangle non-ASCII text; put patch scripts in a file first, and use the editor tools for text with characters like the ellipsis.
-- Node 26 is installed locally; CI and `.nvmrc` use 22.
+- Node 26 is installed locally; `.nvmrc` and the (disabled) workflow use 22.
 - `brandkit` is not pip-installed; run it from `C:\Users\Kpier\Documents\Brand Logos` with `PYTHONPATH=src python -m brandkit ...`.
 - A hook in the owner's Claude setup requires `timeout N` as the first word of long-running commands, and rejects an env assignment before `timeout` (use `export` first). Tool timeouts over two minutes are refused, so split long test runs.
 - Show names and values only through `textContent`, never `innerHTML`.
 - The test site answers `/favicon.ico` with 404 and no cookies; otherwise Chrome's favicon request resets the cookie and adds stray captures.
-- CI has not run: not verified until pushed.
+- **CI is disabled on GitHub** (`gh workflow disable`, 2026-11-07). Its last four runs each took 20 to 23 minutes: install, format, lint, type check, unit tests and build finished in about a minute, then `npm run test:e2e` ran about 20 minutes and failed. The rule is that a CI run over 10 minutes is switched off and run locally. Before turning it back on, find why e2e is slow there (the Playwright Chromium on a runner, the tests that wait for a real alarm, the example-app test) and get a run under 10 minutes, for example by running only a smoke subset.
 
 ## Open questions
 

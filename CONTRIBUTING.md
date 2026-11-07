@@ -11,7 +11,7 @@ npm ci
 npm run check
 ```
 
-Node 22 or newer. `npm ci` installs the pre-commit hook in `.githooks/`.
+Node 22 or newer. The GitHub Actions workflow is switched off (it ran over 10 minutes), so run `npm run check` and `npm run test:e2e` locally before sending a change. `npm ci` installs the pre-commit hook in `.githooks/`.
 
 ## Workflow
 
