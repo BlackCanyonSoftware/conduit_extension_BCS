@@ -25,11 +25,11 @@ own permission prompt for that site and its subdomains. The cookie list is
 `chrome.cookies.getAll({ domain })`, which matches the same scope. Localhost, IP
 addresses and single-label hosts use the exact host.
 
-The main domain comes from a short list of country-style suffixes for now, with the
-Public Suffix List recorded as tech debt in the roadmap.
+The main domain comes from the Public Suffix List (see [ADR 0009](0009-public-suffix-list.md);
+it began as a short list of country-style suffixes).
 
 ## Consequences
 
 - A fresh install can read no site; each site is allowed once, by the person, in the browser's own prompt.
-- Sites on shared suffixes (for example `github.io`) are over-grouped until the Public Suffix List is added; the prompt always shows the exact site being asked for.
+- Sites on shared suffixes (for example `github.io`) are their own sites, one per tenant; the prompt always shows the exact site being asked for.
 - End-to-end tests cannot click the browser's permission prompt, so they use a test build that pre-grants one local test site (`--host-permission`); release builds never do.

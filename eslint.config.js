@@ -9,6 +9,7 @@ export default tseslint.config(
       'coverage/',
       'node_modules/',
       'src/theme/',
+      'src/core/cookies/public-suffix-data.ts',
       'playwright-report/',
       'test-results/',
       '.browsers/',

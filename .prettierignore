@@ -5,3 +5,4 @@ package-lock.json
 src/theme/
 docs/brand/
 tests/fixtures/
+src/core/cookies/public-suffix-data.ts

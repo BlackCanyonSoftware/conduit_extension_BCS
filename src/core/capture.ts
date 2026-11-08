@@ -1,3 +1,4 @@
+import { hostBelongsToSite } from './cookies/site';
 import type { Cookie } from './cookies/types';
 import { extractFrom } from './extract';
 import { isRecord } from './records';
@@ -28,9 +29,7 @@ export function cookieOrigin(cookie: Pick<Cookie, 'secure' | 'domain'>): string 
 
 /** Whether a cookie's domain is the site or one of its subdomains. */
 export function cookieBelongsToSite(cookieDomain: string, site: string): boolean {
-  const domain = cookieDomain.replace(/^\./, '').toLowerCase();
-  const wanted = site.toLowerCase();
-  return domain === wanted || domain.endsWith(`.${wanted}`);
+  return hostBelongsToSite(cookieDomain, site);
 }
 
 /** The cookies a rule names, on the rule's site. A header rule names no cookies. */
