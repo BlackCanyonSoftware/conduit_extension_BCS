@@ -51,3 +51,9 @@ browser's permission prompt); release builds never do that.
 Acceptance criteria met; tests added and passing; format, lint, type check and build
 clean; UI exercised in a browser; affected docs updated; committed as a focused
 Conventional Commit.
+
+## Releasing
+
+1. Move the changelog's _Unreleased_ entries under a new `## [X.Y.Z] - date` heading and set the same version in `package.json` (`npm version X.Y.Z --no-git-tag-version`).
+2. Run `npm run check`, `npm run test:e2e` and `node scripts/package-release.mjs`; load the zip's folder unpacked and look at it.
+3. Commit, then tag and push the tag: `git tag vX.Y.Z && git push origin main vX.Y.Z`. The Release workflow builds the zip and publishes it.

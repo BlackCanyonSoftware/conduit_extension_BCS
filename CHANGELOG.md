@@ -5,13 +5,19 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-08
+
+The first release: a zip to load unpacked in Chrome or Edge.
+
 ### Changed
 
+- Sites are found with the Public Suffix List, so `alice.github.io` and `carol.blogspot.com` are sites of their own instead of being grouped under `github.io` and `blogspot.com`, and a rule or permission for one covers that site only. The list is refreshed with `node scripts/update-public-suffixes.mjs`.
 - The interface follows the IBM Carbon design standard from the brand kit (1.56.1): square corners, layered backgrounds instead of borders and shadows, regular-weight text in the standard's type scale, 40 px controls. The body face is now Public Sans, with Sora kept for headings and the name.
 - Brand assets re-synced from brandkit 1.49.0: the typeface is now Sora, loaded through the brand's `fonts.css` with the `sora.woff` file shipped beside it.
 
 ### Added
 
+- A release zip: `node scripts/package-release.mjs` builds it (with a checksum), and pushing a `vX.Y.Z` tag publishes it as a GitHub release. The README has the install steps for Chrome and Edge.
 - Storage reads: a rule can capture named localStorage or sessionStorage keys from a site, read when a page finishes loading and on "Capture now". Only the keys you name are read.
 - Extractors: any rule can keep only part of a value, what a pattern matches or one field of JSON, so a log or an app receives just that part. The rule's sentence says what is kept. Apps can ask for storage keys and extractors in their handshake.
 - Header capture: a rule can capture named request or response headers from a site, with the same approval, switch, log and delivery to apps as a cookie rule. Only the headers you name are read; everything else in the request is left alone. Apps can ask for headers in their handshake.

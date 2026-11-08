@@ -1,6 +1,6 @@
 {
   "name": "conduit-extension",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Export your own browser's cookies and hand approved data to local apps you choose.",
   "license": "MIT",

@@ -38,8 +38,20 @@ delivery log shows the result.
 
 ## Install
 
-Releases will ship as a zip you load unpacked in Chrome or Edge. Instructions arrive
-with the first release (see [ADR 0003](docs/adr/0003-unpacked-first-distribution.md)).
+Conduit ships as a zip you load unpacked in Chrome or Edge. There is nothing to sign in to and
+nothing is sent anywhere.
+
+1. Download `conduit-<version>.zip` from the [latest release](https://github.com/BlackCanyonSoftware/conduit_extension_BCS/releases/latest). The `.sha256` file beside it lets you check the download: the SHA-256 of the zip should match it.
+2. Unzip it into a folder you will keep, for example `Documents\Conduit`. The browser reads the extension from that folder every time it starts, so do not delete or move it.
+3. Open `chrome://extensions` (Edge: `edge://extensions`) and switch on **Developer mode**.
+4. Choose **Load unpacked** and pick the folder that contains `manifest.json`.
+5. Click the puzzle-piece icon in the toolbar and pin **Conduit**.
+
+A fresh install does nothing until you create and approve a rule, and it can read no site until you
+allow it. To update, download the new zip, unzip it over the old folder, and press the reload
+arrow on Conduit's card in `chrome://extensions`.
+
+To build the zip yourself: `npm ci && node scripts/package-release.mjs` writes `release/conduit-<version>.zip`.
 
 ## Develop
 
@@ -82,3 +94,5 @@ docs/       PRD, roadmap, architecture, design, ADRs, handoff
 ## Licence
 
 MIT, with no warranty. See [LICENSE](LICENSE).
+
+`src/core/cookies/public-suffix-data.ts` is data from the [Public Suffix List](https://publicsuffix.org), which is under the [Mozilla Public License 2.0](https://mozilla.org/MPL/2.0/); that file keeps its notice. The brand assets in `src/theme/` and `docs/brand/` come from the Black Canyon Software brand kit, and the fonts in `src/theme/font/` carry their own licence files.

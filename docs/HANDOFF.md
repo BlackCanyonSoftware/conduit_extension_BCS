@@ -49,7 +49,7 @@
 
 ## Tech debt and brand-kit findings
 
-See "Tech debt" in `docs/ROADMAP.md`: Public Suffix List for site detection; partitioned cookies; three brand-kit contrast pairings overridden in `src/ui/shared.css`; a moderate dev-only `minimatch` advisory; log storage size and the clear-versus-capture race; one delivery per cookie change; values wait in storage until delivered.
+See "Tech debt" in `docs/ROADMAP.md`: partitioned cookies; three brand-kit contrast pairings overridden in `src/ui/shared.css`; a moderate dev-only `minimatch` advisory; log storage size and the clear-versus-capture race; one delivery per cookie change; values wait in storage until delivered.
 
 ## Gotchas
 
@@ -69,6 +69,8 @@ See PRD section 10.
 
 ## Session log
 
+- 2026-11-08: first release prepared (0.1.0): `scripts/package-release.mjs` (clean build, manifest checks, deterministic zip, SHA-256), `.github/workflows/release.yml` (on a `v*` tag), README install steps for Chrome and Edge, release steps in CONTRIBUTING. Not tagged or pushed: the owner tags `v0.1.0` when ready.
+- 2026-11-08: Public Suffix List (ADR 0009): `public-suffix.ts` matcher, generated `public-suffix-data.ts` (list 2026-11-06), `hostBelongsToSite`, exact-host rule for a host that is itself a suffix; tech debt entry replaced by a "refresh the snapshot" note.
 - 2026-11-01: brand re-synced from brandkit 1.49.0 (`brandkit bundle conduit src/theme` and `--set readme docs/brand`): typeface changed from Nunito to Sora. Old Nunito files removed by hand (bundle does not delete them). Our CSS names no font family (only `var(--mono)`); full e2e (82) and unit (306) tests pass.
 - 2026-10-30 (part 8): milestone 5 built test-first: extractors (pattern or JSON path, checked and bounded), storage rule kind read with `chrome.scripting`, new `scripting` permission, form choices for storage and "Keep", handshake `storage` kind and `extract`, example app options, ADR 0008, 16 e2e tests.
 - 2026-10-30 (part 7): milestone 4 built test-first: header rule kind (request or response, lower-case names), observe-only `webRequest` capture, handshake `header` requests with a direction, form choice, ADR 0007, example app `--kind header`, 12 e2e tests.
