@@ -1,4 +1,5 @@
-// Builds the unpacked extension into dist/ (or --out <dir>).
+// Builds the unpacked extension into dist/ (or --out <dir>); --target firefox builds the
+// Firefox version (into dist-firefox/ unless --out is given).
 // Bundles each entry point with esbuild and writes manifest.json with the version
 // taken from package.json, which is the single source of truth for it.
 import { build } from 'esbuild';
@@ -30,6 +31,11 @@ const STATIC_FILES = {
 // partials (*.html) are templates for other projects and are left out.
 const THEME_DIRS = ['font', 'icon', 'mark', 'template', 'theme', 'ui', 'wordmark'];
 
+// --test-bridge adds a content script on the local test site that lets an end-to-end test reach
+// the extension from a page (tests/support/bridge-content.ts). The Firefox tests use it because
+// Playwright's Firefox cannot open an extension's own pages. Releases never pass it.
+const withTestBridge = process.argv.includes('--test-bridge');
+
 // --host-permission <pattern> (repeatable) pre-grants site access in the built manifest.
 // Only the end-to-end tests use it, because a test cannot click the browser's own
 // permission prompt. Release builds never pass it.
@@ -37,16 +43,57 @@ const grantedHosts = process.argv.flatMap((arg, index) =>
   arg === '--host-permission' ? [process.argv[index + 1] ?? ''] : [],
 );
 
+const targetFlag = process.argv.indexOf('--target');
+const target = targetFlag === -1 ? 'chrome' : (process.argv[targetFlag + 1] ?? '');
+if (target !== 'chrome' && target !== 'firefox') {
+  throw new Error(`--target must be chrome or firefox, not "${target}"`);
+}
+
+// Firefox runs the background code as an event page (it has no service workers), wants an
+// add-on id, and says what data the add-on collects. Everything else in the manifest is shared.
+const FIREFOX_ID = 'conduit@blackcanyonsoftware';
+const FIREFOX_MIN_VERSION = '140.0';
+
+function forTarget(manifest) {
+  if (target === 'chrome') return manifest;
+  const { background, ...shared } = manifest;
+  delete shared.minimum_chrome_version;
+  return {
+    ...shared,
+    background: { scripts: [background.service_worker], type: background.type },
+    browser_specific_settings: {
+      gecko: {
+        id: FIREFOX_ID,
+        strict_min_version: FIREFOX_MIN_VERSION,
+        data_collection_permissions: { required: ['none'] },
+      },
+    },
+  };
+}
+
 async function buildExtension(outDir) {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-  const manifest = JSON.parse(await readFile(path.join(root, 'src', 'manifest.json'), 'utf8'));
+  const manifest = forTarget(
+    JSON.parse(await readFile(path.join(root, 'src', 'manifest.json'), 'utf8')),
+  );
   const hostPermissions = grantedHosts.length > 0 ? { host_permissions: grantedHosts } : {};
+  const bridge = withTestBridge
+    ? {
+        content_scripts: [
+          {
+            matches: ['http://localhost/*', 'http://127.0.0.1/*'],
+            js: ['test/bridge-content.js'],
+            run_at: 'document_start',
+          },
+        ],
+      }
+    : {};
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
   await writeFile(
     path.join(outDir, 'manifest.json'),
-    `${JSON.stringify({ ...manifest, ...hostPermissions, version: pkg.version }, null, 2)}\n`,
+    `${JSON.stringify({ ...manifest, ...hostPermissions, ...bridge, version: pkg.version }, null, 2)}\n`,
   );
 
   for (const [from, to] of Object.entries(STATIC_FILES)) {
@@ -62,12 +109,15 @@ async function buildExtension(outDir) {
 
   await build({
     entryPoints: Object.fromEntries(
-      Object.entries(ENTRY_POINTS).map(([out, src]) => [out, path.join(root, src)]),
+      Object.entries({
+        ...ENTRY_POINTS,
+        ...(withTestBridge ? { 'test/bridge-content': 'tests/support/bridge-content.ts' } : {}),
+      }).map(([out, src]) => [out, path.join(root, src)]),
     ),
     outdir: outDir,
     bundle: true,
     format: 'esm',
-    target: 'chrome120',
+    target: target === 'firefox' ? 'firefox140' : 'chrome120',
     sourcemap: false,
     logLevel: 'warning',
   });
@@ -75,7 +125,9 @@ async function buildExtension(outDir) {
 
 const outFlag = process.argv.indexOf('--out');
 const outDir = path.resolve(
-  outFlag === -1 ? path.join(root, 'dist') : (process.argv[outFlag + 1] ?? ''),
+  outFlag === -1
+    ? path.join(root, target === 'firefox' ? 'dist-firefox' : 'dist')
+    : (process.argv[outFlag + 1] ?? ''),
 );
 await buildExtension(outDir);
 console.log(`Built extension to ${outDir}`);

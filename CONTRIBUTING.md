@@ -11,7 +11,7 @@ npm ci
 npm run check
 ```
 
-Node 22 or newer. Run `npm run check` and `npm run test:e2e` before sending a change; the GitHub Actions workflow runs the same. `npm ci` installs the pre-commit hook in `.githooks/`.
+Node 22 or newer. Run `npm run check`, `npm run test:e2e` and `npm run test:e2e:firefox` before sending a change; the GitHub Actions workflow runs the same (install the browsers once with `npx playwright install chromium firefox`). `npm ci` installs the pre-commit hook in `.githooks/`.
 
 ## Workflow
 

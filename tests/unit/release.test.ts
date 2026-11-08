@@ -118,3 +118,34 @@ describe('the release zip', () => {
     expect(sums).toBe(`${createHash('sha256').update(a).digest('hex')}  conduit-${version}.zip\n`);
   });
 });
+
+describe('the Firefox release zip', () => {
+  it('is the Firefox build: an event page, an add-on id, and none of the test-only code', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'conduit-release-ff-'));
+    try {
+      execFileSync(
+        process.execPath,
+        ['scripts/package-release.mjs', '--target', 'firefox', '--out', dir],
+        { stdio: 'pipe' },
+      );
+      const entries = readZip(readFileSync(path.join(dir, `conduit-${version}-firefox.zip`)));
+      const manifest = JSON.parse(
+        entries.find((entry) => entry.name === 'manifest.json')?.data.toString('utf8') ?? '{}',
+      ) as Record<string, unknown>;
+      const names = entries.map((entry) => entry.name);
+
+      expect(manifest.version).toBe(version);
+      expect(manifest.background).toEqual({
+        scripts: ['background/service-worker.js'],
+        type: 'module',
+      });
+      expect(JSON.stringify(manifest)).toContain('conduit@blackcanyonsoftware');
+      expect(manifest.host_permissions).toBeUndefined();
+      expect(manifest.content_scripts).toBeUndefined();
+      expect(names.filter((name) => name.startsWith('test/'))).toEqual([]);
+      expect(names).toContain('background/service-worker.js');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});

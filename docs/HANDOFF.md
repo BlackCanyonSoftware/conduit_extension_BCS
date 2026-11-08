@@ -44,7 +44,7 @@
 ## Next steps
 
 1. A person tries the permission flows in a visible Chrome and, if possible, runs the example app: `python examples/reference_sink.py --site <a site you use> --names <a cookie name>`, then Local apps, Look on this computer.
-2. Milestone 6: Firefox (US-017): compatibility layer and signed XPI route. Known Firefox differences: `extraHeaders` in `webRequest` listeners, `chrome.scripting` (use `browser.*` or the polyfill), optional host permissions.
+2. Owner: the visible-browser checks in `docs/MANUAL-CHECKS.md` (Chrome, Edge, and section 9 for Firefox). Then: signing the Firefox zip through Mozilla's add-on site (needs the owner's account and keys), and a first release (`git tag v0.1.0`).
 3. Owner pushes the commits; CI is on again (see the Gotchas entry about it) and should finish in a few minutes. If a run goes over 10 minutes, disable the workflow and run locally.
 
 ## Tech debt and brand-kit findings
@@ -69,6 +69,7 @@ See PRD section 10.
 
 ## Session log
 
+- 2026-11-08: milestone 6 (Firefox, ADR 0010): `--target firefox` build, header listener fallback and own-request check for Firefox, `--test-bridge` content script for tests, a small debugging-protocol client to install the add-on into Playwright's Firefox, 16 Firefox tests, `package-release.mjs --target firefox`, CI jobs with a 10-minute timeout. The popup and rules page have not been opened in Firefox; the release zip is unsigned.
 - 2026-11-08: first release prepared (0.1.0): `scripts/package-release.mjs` (clean build, manifest checks, deterministic zip, SHA-256), `.github/workflows/release.yml` (on a `v*` tag), README install steps for Chrome and Edge, release steps in CONTRIBUTING. Not tagged or pushed: the owner tags `v0.1.0` when ready.
 - 2026-11-08: Public Suffix List (ADR 0009): `public-suffix.ts` matcher, generated `public-suffix-data.ts` (list 2026-11-06), `hostBelongsToSite`, exact-host rule for a host that is itself a suffix; tech debt entry replaced by a "refresh the snapshot" note.
 - 2026-11-01: brand re-synced from brandkit 1.49.0 (`brandkit bundle conduit src/theme` and `--set readme docs/brand`): typeface changed from Nunito to Sora. Old Nunito files removed by hand (bundle does not delete them). Our CSS names no font family (only `var(--mono)`); full e2e (82) and unit (306) tests pass.

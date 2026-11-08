@@ -55,6 +55,11 @@ describe('built manifest', () => {
     }
   });
 
+  it('has no content scripts and no test-only files', () => {
+    expect((manifest as { content_scripts?: unknown }).content_scripts).toBeUndefined();
+    expect(existsSync(path.join(outDir, 'test'))).toBe(false);
+  });
+
   it('requests site access per site at runtime, not in the manifest', () => {
     expect(manifest.host_permissions ?? []).toEqual([]);
     expect(manifest.optional_host_permissions ?? []).not.toContain('<all_urls>');
@@ -94,5 +99,68 @@ describe('popup page (US-015, US-016)', () => {
     expect(html).toContain('id="bk-theme"');
     expect(html).toMatch(/data-info-toggle[\s\S]*?aria-controls="info-status"/);
     expect(html).toContain('id="info-status"');
+  });
+});
+
+describe('Firefox build (US-017)', () => {
+  interface FirefoxManifest extends Manifest {
+    background?: { service_worker?: string; scripts?: string[]; type?: string };
+    browser_specific_settings?: {
+      gecko?: {
+        id?: string;
+        strict_min_version?: string;
+        data_collection_permissions?: { required?: string[] };
+      };
+    };
+    minimum_chrome_version?: string;
+  }
+  let firefoxDir: string;
+  let firefox: FirefoxManifest;
+
+  beforeAll(() => {
+    firefoxDir = mkdtempSync(path.join(tmpdir(), 'conduit-firefox-'));
+    execFileSync(
+      process.execPath,
+      ['scripts/build.mjs', '--target', 'firefox', '--out', firefoxDir],
+      {
+        stdio: 'pipe',
+      },
+    );
+    firefox = JSON.parse(
+      readFileSync(path.join(firefoxDir, 'manifest.json'), 'utf8'),
+    ) as FirefoxManifest;
+  });
+
+  afterAll(() => {
+    rmSync(firefoxDir, { recursive: true, force: true });
+  });
+
+  it('runs the background code as an event page, because Firefox has no service workers', () => {
+    expect(firefox.background?.service_worker).toBeUndefined();
+    expect(firefox.background?.scripts).toEqual(['background/service-worker.js']);
+    expect(firefox.background?.type).toBe('module');
+    expect(existsSync(path.join(firefoxDir, 'background', 'service-worker.js'))).toBe(true);
+  });
+
+  it('names the add-on and says it collects no data', () => {
+    expect(firefox.browser_specific_settings?.gecko?.id).toMatch(/^[\w.-]+@[\w.-]+$/);
+    expect(firefox.browser_specific_settings?.gecko?.strict_min_version).toBeDefined();
+    expect(firefox.browser_specific_settings?.gecko?.data_collection_permissions?.required).toEqual(
+      ['none'],
+    );
+    expect(firefox.minimum_chrome_version).toBeUndefined();
+  });
+
+  it('asks for the same permissions and grants no sites, like the Chrome build', () => {
+    expect(firefox.permissions).toEqual(manifest.permissions);
+    expect(firefox.optional_host_permissions).toEqual(manifest.optional_host_permissions);
+    expect(firefox.host_permissions ?? []).toEqual([]);
+    expect(firefox.version).toBe(manifest.version);
+  });
+
+  it('leaves the Chrome build as it was', () => {
+    const chromeManifest = manifest as FirefoxManifest;
+    expect(chromeManifest.background?.service_worker).toBe('background/service-worker.js');
+    expect(chromeManifest.browser_specific_settings).toBeUndefined();
   });
 });

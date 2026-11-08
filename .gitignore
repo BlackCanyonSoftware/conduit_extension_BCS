@@ -13,3 +13,4 @@ test-results/
 Thumbs.db
 .browsers/
 __pycache__/
+dist-firefox/

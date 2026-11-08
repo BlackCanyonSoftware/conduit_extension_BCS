@@ -1,11 +1,13 @@
 // Builds the release zip: a clean build (never with the test-only host permissions) packed as
 // release/conduit-<version>.zip, with a SHA-256 file beside it.
 //
-//   node scripts/package-release.mjs            writes into release/
-//   node scripts/package-release.mjs --out dir  writes into dir
+//   node scripts/package-release.mjs                     the Chrome and Edge zip, into release/
+//   node scripts/package-release.mjs --target firefox    the Firefox zip (conduit-<version>-firefox.zip)
+//   node scripts/package-release.mjs --out dir           writes into dir
 //
 // The zip is the unpacked extension: unzip it, then load the folder in Chrome or Edge from
-// chrome://extensions / edge://extensions with developer mode on. The zip is written by hand
+// chrome://extensions / edge://extensions with developer mode on. The Firefox zip is what
+// Mozilla's add-on site signs (or `about:debugging` loads temporarily). The zip is written by hand
 // below (stored paths sorted, fixed timestamps), so the same build gives the same bytes and no
 // packaging dependency is needed.
 import { execFileSync } from 'node:child_process';
@@ -103,13 +105,21 @@ const outDir = path.resolve(
   outFlag === -1 ? path.join(root, 'release') : (process.argv[outFlag + 1] ?? ''),
 );
 
+const targetFlag = process.argv.indexOf('--target');
+const target = targetFlag === -1 ? 'chrome' : (process.argv[targetFlag + 1] ?? '');
+if (target !== 'chrome' && target !== 'firefox') {
+  throw new Error(`--target must be chrome or firefox, not "${target}"`);
+}
+
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 const staging = await mkdtemp(path.join(tmpdir(), 'conduit-release-'));
 try {
   // A release build never carries the test-only host permissions: no --host-permission here.
-  execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs'), '--out', staging], {
-    stdio: 'pipe',
-  });
+  execFileSync(
+    process.execPath,
+    [path.join(root, 'scripts', 'build.mjs'), '--target', target, '--out', staging],
+    { stdio: 'pipe' },
+  );
   const manifest = JSON.parse(await readFile(path.join(staging, 'manifest.json'), 'utf8'));
   if (manifest.version !== pkg.version) {
     throw new Error(`manifest version ${manifest.version} is not package.json's ${pkg.version}`);
@@ -117,13 +127,16 @@ try {
   if (manifest.host_permissions !== undefined) {
     throw new Error('the release manifest grants sites; a release must not');
   }
+  if (manifest.content_scripts !== undefined) {
+    throw new Error('the release manifest has a content script (the test bridge is test-only)');
+  }
   if ((manifest.optional_host_permissions ?? []).includes('<all_urls>')) {
     throw new Error('the release manifest asks for <all_urls>');
   }
 
   const files = await readTree(staging);
   await mkdir(outDir, { recursive: true });
-  const zipName = `conduit-${pkg.version}.zip`;
+  const zipName = `conduit-${pkg.version}${target === 'firefox' ? '-firefox' : ''}.zip`;
   const zip = createZip(files);
   await writeFile(path.join(outDir, zipName), zip);
   const sha = createHash('sha256').update(zip).digest('hex');

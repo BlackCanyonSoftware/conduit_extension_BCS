@@ -5,15 +5,15 @@ in progress, done.
 
 ## Milestones
 
-| #   | Milestone                                                                                                                                                                    | Stories                        | Size | Status                                                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---- | ---------------------------------------------------------------------------- |
-| 0   | **Walking skeleton:** TypeScript + esbuild build, loadable MV3 popup in the Conduit brand theme with light/dark toggle, lint, type check, unit test, one Playwright test, CI | US-015, US-016                 | M    | done                                                                         |
-| 1   | **Cookie export:** per-site list, per-cookie selection, three formats, copy and download, redacted previews                                                                  | US-001, US-002, US-003         | M    | done (browser permission prompt not yet seen by a person)                    |
-| 2   | **Rules and approval:** rule model, one-sentence summaries, approval UI, kill switch, local capture log, rules import/export (arrive disabled)                               | US-004, US-005, US-006, US-007 | L    | done (permission prompt not yet seen by a person)                            |
-| 3   | **Sinks:** handshake, approval of what a sink asks for, delivery with retry via alarms, delivery log, non-loopback confirmation, custom-route option, reference sink script  | US-008, US-009, US-010, US-011 | L    | done (permission prompts and a run with a real app not yet seen by a person) |
-| 4   | **Header capture:** header rule kind on top of the rules engine                                                                                                              | US-012                         | M    | done (permission prompt and a real site not yet seen by a person)            |
-| 5   | **Storage and extractors:** storage reads, regex/JSON-path extractors                                                                                                        | US-013, US-014                 | M    | done (permission prompt and a real site not yet seen by a person)            |
-| 6   | **Firefox:** compatibility layer, signed XPI route                                                                                                                           | US-017                         | M    | not started                                                                  |
+| #   | Milestone                                                                                                                                                                    | Stories                        | Size | Status                                                                                   |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---- | ---------------------------------------------------------------------------------------- |
+| 0   | **Walking skeleton:** TypeScript + esbuild build, loadable MV3 popup in the Conduit brand theme with light/dark toggle, lint, type check, unit test, one Playwright test, CI | US-015, US-016                 | M    | done                                                                                     |
+| 1   | **Cookie export:** per-site list, per-cookie selection, three formats, copy and download, redacted previews                                                                  | US-001, US-002, US-003         | M    | done (browser permission prompt not yet seen by a person)                                |
+| 2   | **Rules and approval:** rule model, one-sentence summaries, approval UI, kill switch, local capture log, rules import/export (arrive disabled)                               | US-004, US-005, US-006, US-007 | L    | done (permission prompt not yet seen by a person)                                        |
+| 3   | **Sinks:** handshake, approval of what a sink asks for, delivery with retry via alarms, delivery log, non-loopback confirmation, custom-route option, reference sink script  | US-008, US-009, US-010, US-011 | L    | done (permission prompts and a run with a real app not yet seen by a person)             |
+| 4   | **Header capture:** header rule kind on top of the rules engine                                                                                                              | US-012                         | M    | done (permission prompt and a real site not yet seen by a person)                        |
+| 5   | **Storage and extractors:** storage reads, regex/JSON-path extractors                                                                                                        | US-013, US-014                 | M    | done (permission prompt and a real site not yet seen by a person)                        |
+| 6   | **Firefox:** compatibility layer, signed XPI route                                                                                                                           | US-017                         | M    | done in the background and the build; the popup and rules page not yet opened in Firefox |
 
 Each milestone ends with: tests green, lint/type check/build green, a security pass
 against the OWASP Top 10 (as it applies to an extension), an accessibility pass,
@@ -27,7 +27,7 @@ Exit criteria per milestone:
 - **3:** the reference sink (a short Python script in `examples/`) receives a delivery end to end; a broken sink shows an error in the UI.
 - **4:** only the named headers appear in captures; no other header is stored.
 - **5:** an extractor reduces a captured blob to one field before delivery.
-- **6:** the same end-to-end tests pass on Firefox.
+- **6:** the same background behaviour passes its end-to-end tests on Firefox (the UI pages cannot be opened by Playwright's Firefox; see ADR 0010).
 
 ## Now / Next / Later
 
@@ -53,3 +53,4 @@ Every `TODO` in code must be listed here.
 - **Regular expressions run in the service worker.** Patterns are limited (200 characters, no back-references, no repeated repeats such as `(a+)+`) and only tried on values up to 20,000 characters, but a hand-written pattern can still be slow. Move extraction to a worker with a time limit if patterns ever come from anywhere but the person or an app they approved.
 - **JSON paths are a small subset** (`$.a.b`, `[0]`, `['key']`; no wildcards or filters).
 - **Apps on other computers** are covered by tests up to the typed confirmation and by seeded-state tests of the marker; a full run against a real https app on another machine has not been done.
+- **Firefox: pages not opened by a test, release not signed.** Playwright's Firefox cannot open an extension's own pages, so the popup and rules page are checked by hand in Firefox (`docs/MANUAL-CHECKS.md`). The tests ran on Playwright's Firefox 157, not the release or ESR channel. The release zip is unsigned: signing through Mozilla's add-on site needs the owner's account and keys. If real UI tests in Firefox are wanted, the way is WebDriver (geckodriver) or Puppeteer's Firefox support, either a new dependency and a second set of UI tests.

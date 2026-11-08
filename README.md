@@ -14,7 +14,7 @@ Export your cookies in the format a tool wants, or set up a rule that hands exac
 the values you choose to a local application you trust. Everything stays on your
 machine: no server, no account, no telemetry.
 
-> **Status:** early development (milestone 5). Cookie export, rules for cookies, headers and page storage with approval, a
+> **Status:** early development (milestone 6). Cookie export, rules for cookies, headers and page storage with approval, a
 > kill switch, a capture log and delivery to local apps work in a development build; there is no release yet. Follow the [roadmap](docs/ROADMAP.md).
 
 ## What it will do
@@ -51,7 +51,9 @@ A fresh install does nothing until you create and approve a rule, and it can rea
 allow it. To update, download the new zip, unzip it over the old folder, and press the reload
 arrow on Conduit's card in `chrome://extensions`.
 
-To build the zip yourself: `npm ci && node scripts/package-release.mjs` writes `release/conduit-<version>.zip`.
+**Firefox:** the release also has `conduit-<version>-firefox.zip`. Firefox only keeps add-ons that Mozilla has signed, so until that zip is signed, load it temporarily: open `about:debugging`, choose **This Firefox**, then **Load Temporary Add-on**, and pick the zip. It stays until Firefox restarts. Firefox 140 or newer.
+
+To build the zips yourself: `npm ci && node scripts/package-release.mjs` writes `release/conduit-<version>.zip`, and adding `--target firefox` writes the Firefox one.
 
 ## Develop
 
@@ -74,7 +76,7 @@ npm run check
 | `npm run format:check` | Prettier, check                                             |
 | `npm run check`        | Format check, lint, type check, tests and build             |
 
-The end-to-end tests need Playwright's Chromium once: `npx playwright install chromium`.
+The end-to-end tests need Playwright's browsers once: `npx playwright install chromium firefox`.
 
 `npm ci` also points git at `.githooks/`, whose pre-commit hook checks formatting and lint on staged files.
 

@@ -6,3 +6,4 @@ src/theme/
 docs/brand/
 tests/fixtures/
 src/core/cookies/public-suffix-data.ts
+dist-firefox/

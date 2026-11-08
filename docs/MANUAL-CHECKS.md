@@ -61,3 +61,16 @@ Mark anything that does not match what is written here as a bug.
 
 When you are done, tell the assistant what did not match, and note it under "Verification so far" in
 `docs/HANDOFF.md`.
+
+## 9. Firefox
+
+Firefox 140 or newer. The automated Firefox tests cover capture, headers, page storage and delivery in
+the background, but cannot open the popup or the rules page, so look at those yourself.
+
+1. Download `conduit-<version>-firefox.zip` from the release (or run `node scripts/package-release.mjs --target firefox`).
+2. Open `about:debugging`, click **This Firefox**, then **Load Temporary Add-on...**, and pick the zip.
+3. Firefox shows the add-on's permissions. Click the puzzle-piece icon in the toolbar, pin **Conduit**, and click it. The popup opens and asks before it reads a site, like Chrome.
+4. Repeat steps 2 to 8 above (site prompt, a rule, headers and page storage, an app, the look and feel). Where Chrome's prompt says "Allow", Firefox asks in its own words; the sentence in Conduit's rule is the same.
+5. Pay attention to: the popup's size and scrolling, the rules page in light and dark, the sun/moon button, and that **Capture now** on a page-storage rule works with the page open.
+
+The add-on is removed when Firefox restarts (temporary add-ons only), so repeat step 2 next time.

@@ -17,6 +17,7 @@ The first release: a zip to load unpacked in Chrome or Edge.
 
 ### Added
 
+- Firefox (140 or newer): `conduit-<version>-firefox.zip` in each release, loaded temporarily from `about:debugging` until Mozilla signs it. The same rules, approval, capture, headers, page storage, extractors and delivery. `node scripts/build.mjs --target firefox` builds it; the background is tested in Firefox with `npm run test:e2e:firefox`.
 - A release zip: `node scripts/package-release.mjs` builds it (with a checksum), and pushing a `vX.Y.Z` tag publishes it as a GitHub release. The README has the install steps for Chrome and Edge.
 - Storage reads: a rule can capture named localStorage or sessionStorage keys from a site, read when a page finishes loading and on "Capture now". Only the keys you name are read.
 - Extractors: any rule can keep only part of a value, what a pattern matches or one field of JSON, so a log or an app receives just that part. The rule's sentence says what is kept. Apps can ask for storage keys and extractors in their handshake.

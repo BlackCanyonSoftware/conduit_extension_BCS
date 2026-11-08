@@ -18,6 +18,7 @@ npm ci                 # install; also sets git hooks
 npm run check          # format check, lint, typecheck, tests, build
 npm test               # unit tests (Vitest)
 npm run test:e2e       # builds, then Playwright in headless Chromium
+npm run test:e2e:firefox  # builds the Firefox version, then the background tests in Firefox
 npm run dev            # rebuild dist/ on change
 npm run build          # unpacked extension into dist/
 npm run format         # Prettier, write
@@ -30,7 +31,7 @@ npm run format         # Prettier, write
 - `src/platform/`: the only code that touches `chrome.*` (pages and the worker call it).
 - `examples/` the reference app (Python, standard library only), also exercised by an end-to-end test.
 - `src/background/` service worker, `src/popup/` and `src/options/` pages, `src/ui/` helpers shared by pages.
-- `scripts/build.mjs`: esbuild entry points live in `ENTRY_POINTS`.
+- `scripts/build.mjs`: esbuild entry points live in `ENTRY_POINTS`; `--target firefox` builds the Firefox version.
 - `tests/unit/`: Vitest. Name tests after PRD story IDs (`US-001`).
 - `docs/`: PRD, ROADMAP, ARCHITECTURE, DESIGN, INTEGRATION-CONTRACT, `adr/`, HANDOFF.
 
@@ -58,7 +59,7 @@ npm run format         # Prettier, write
 
 ## Working agreements
 
-- **CI runs the same checks as `npm run check` plus the end-to-end tests.** A CI run that takes over 10 minutes gets disabled on GitHub and the checks run locally instead; keep it under that (the whole suite takes about 3 minutes). Run `npm run check` and `npm run test:e2e` here before committing, and report what you ran.
+- **CI runs the same checks as `npm run check` plus the end-to-end tests.** A CI run that takes over 10 minutes gets disabled on GitHub and the checks run locally instead; keep it under that (the whole suite takes about 3 minutes). Run `npm run check`, `npm run test:e2e` and `npm run test:e2e:firefox` here before committing, and report what you ran.
 - Report only what you ran and observed; mark anything unverified.
 - Never weaken, skip or delete a test, or bypass a hook, to get a passing run.
 - Label placeholders and list them in `docs/HANDOFF.md`.

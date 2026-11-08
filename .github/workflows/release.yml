@@ -12,6 +12,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,7 +26,9 @@ jobs:
           test "v${version}" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} is not v${version}"; exit 1; }
       - run: npm run check
       - name: Package
-        run: node scripts/package-release.mjs
+        run: |
+          node scripts/package-release.mjs
+          node scripts/package-release.mjs --target firefox
       - name: Notes from the changelog
         run: |
           version="${GITHUB_REF_NAME#v}"
