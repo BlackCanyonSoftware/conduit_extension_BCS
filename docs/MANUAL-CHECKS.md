@@ -96,8 +96,8 @@ this session only and disappears when you close Firefox.
 ### A5. What you also need
 
 - A website you are signed in to. These steps use `https://github.com`. Any site you use works if you swap in its name.
-- For check 5: the Python program (`python --version` in PowerShell should print a number).
-- Keep the PowerShell window from A1; check 5 uses it again.
+- For check 6: the Python program (`python --version` in PowerShell should print a number).
+- A PowerShell window for check 6. Its commands start with the `cd` line from A1, so any window works.
 
 ---
 
@@ -195,18 +195,23 @@ Keep the `https://github.com` tab open in this window. Do these on the **Rules**
 
 ## Check 6. An app that receives values
 
-1. In the PowerShell window from A1 type this and press Enter. It prints `listening on http://127.0.0.1:8778`
-   and stays running; leave the window open.
+1. In PowerShell type these two lines, pressing Enter after each. The second stays running; leave the window open.
 
    ```powershell
+   cd C:\Users\Kpier\Documents\Conduit_extension_BCS
    python examples/reference_sink.py --site github.com --names logged_in
    ```
 
+   **You should see:** `listening on http://127.0.0.1:` followed by a number from 8778 to 8787. **Write that number down; it is `PORT` below.**
+   If other programs on your computer already use 8778 and 8779 (Docker does on some machines), the app prints a line
+   `port 8778 is not free ... another program is using it.` for each one it skips and uses the next free port, for example 8780.
+   That is expected.
+
 2. On the **Rules** tab, scroll to **Local apps**. Click **Look on this computer**.
 3. The browser shows a confirmation box about `127.0.0.1`. Click **Allow**.
-4. **You should see:** `Reference app at http://127.0.0.1:8778` with an **Add** button. Click **Add**.
+4. **You should see:** `Reference app at http://127.0.0.1:PORT` (your number) with an **Add** button. Click **Add**.
 5. **You should see:** a box headed **Reference app**, marked **On this computer**, with a tick-box whose text is
-   `Send the cookie logged_in from github.com to 127.0.0.1:8778 (Reference app).`
+   `Send the cookie logged_in from github.com to 127.0.0.1:PORT (Reference app).`
    Under it: `The app says: This example app shows what it receives, so you can see how Conduit works.`
 6. Tick the box. Click **Add app and approve 1 request**. Click **Allow** in the next confirmation box.
    **You should see:** `Added Reference app. 1 request approved.`
@@ -241,7 +246,7 @@ waiting retry survives that.
 1. Make sure the app is stopped (it is, if you pressed Ctrl+C at the end of check 6).
 2. On the Rules tab click **Send now**. It fails (the red `1 delivery has not gone through` box appears) and Conduit will retry
    by itself in 30 seconds.
-3. Start the app again in PowerShell right away: press the Up arrow until you see the `python examples/reference_sink.py ...` line, then Enter.
+3. Start the app again in PowerShell right away: press the Up arrow until you see the `python examples/reference_sink.py ...` line, then add ` --port PORT` (your number from check 6) to the end and press Enter, so it comes back on the same port Conduit has saved.
 4. Within the 30 seconds, open a new tab and go to `chrome://serviceworker-internals` (Edge: `edge://serviceworker-internals`).
    Find the entry whose **Scope** is `chrome-extension://` followed by Conduit's ID, and click **Stop** beside it.
    Conduit's ID is on its card at `chrome://extensions` (Developer mode on), under the name, as `ID: ...`.

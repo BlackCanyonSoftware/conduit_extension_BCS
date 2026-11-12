@@ -11,6 +11,7 @@ The first release: a zip to load unpacked in Chrome or Edge.
 
 ### Fixed
 
+- The example app starts on a computer where something else already uses port 8778 (Docker Desktop does on some machines): with no `--port` it takes the first free port from 8778 to 8787 and says which ports it skipped, and on Windows a second copy can no longer share a port with the first.
 - Chrome showed "You need to request host permissions in the manifest file in order to be notified about requests from the webRequest API" on the extension's card after a fresh install. The manifest now holds the loopback address `http://127.0.0.1/*` (this computer, where local apps live); every website still needs your approval. A test loads the release build and checks the card has no errors.
 
 ### Changed

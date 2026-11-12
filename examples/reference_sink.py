@@ -18,9 +18,13 @@ receives, never the values, because values are secrets.
 
 import argparse
 import json
+import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 MAX_BODY_BYTES = 64 * 1024
+
+# Conduit's "Look on this computer" checks these ports, so with no --port the app takes the first free one.
+PORTS = range(8778, 8788)
 
 
 def make_handler(args):
@@ -87,9 +91,38 @@ def make_handler(args):
     return Handler
 
 
+class Server(HTTPServer):
+    # On Windows, address reuse lets a second copy bind a port the first is already using, so it
+    # would sit there receiving nothing. Elsewhere reuse only skips the wait after a restart.
+    allow_reuse_address = os.name != "nt"
+
+
+def open_server(args):
+    """Listens on the port asked for, or on the first free one in PORTS."""
+    ports = [args.port] if args.port is not None else list(PORTS)
+    handler = make_handler(args)
+    for port in ports:
+        try:
+            return Server(("127.0.0.1", port), handler)
+        except OSError as error:  # an address in use, or one Windows keeps back, is an OSError
+            reason = error.strerror or str(error)
+            print(f"port {port} is not free ({reason}); another program is using it.", flush=True)
+    if args.port is not None:
+        raise SystemExit(f"Try another port, for example: --port {PORTS[-1]}")
+    raise SystemExit(
+        f"No free port from {PORTS[0]} to {PORTS[-1]}. Free one of them, or choose a port "
+        "with --port N (add the app in Conduit by its address; 'Look on this computer' only checks those ports)."
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="A small Conduit app for trying things out.")
-    parser.add_argument("--port", type=int, default=8778, help="port to listen on (0 picks one)")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="port to listen on (0 picks any); by default the first free one from 8778 to 8787",
+    )
     parser.add_argument("--name", default="Reference app", help="name shown in Conduit")
     parser.add_argument("--site", default="example.com", help="site whose data to ask for")
     parser.add_argument(
@@ -123,7 +156,7 @@ def main():
     parser.add_argument("--fail-first", type=int, default=0, help="answer 500 this many times")
     args = parser.parse_args()
 
-    server = HTTPServer(("127.0.0.1", args.port), make_handler(args))
+    server = open_server(args)
     print(f"listening on http://127.0.0.1:{server.server_address[1]}", flush=True)
     try:
         server.serve_forever()
