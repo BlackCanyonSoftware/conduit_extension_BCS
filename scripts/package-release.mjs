@@ -124,8 +124,13 @@ try {
   if (manifest.version !== pkg.version) {
     throw new Error(`manifest version ${manifest.version} is not package.json's ${pkg.version}`);
   }
-  if (manifest.host_permissions !== undefined) {
-    throw new Error('the release manifest grants sites; a release must not');
+  // The one site a release holds from the start is this computer's loopback address, where local
+  // apps live (Chrome also needs some host permission before it will register webRequest
+  // listeners at all). Any other site is asked for at run time.
+  if (JSON.stringify(manifest.host_permissions ?? []) !== JSON.stringify(['http://127.0.0.1/*'])) {
+    throw new Error(
+      `the release manifest's host_permissions must be only http://127.0.0.1/*, not ${JSON.stringify(manifest.host_permissions)}`,
+    );
   }
   if (manifest.content_scripts !== undefined) {
     throw new Error('the release manifest has a content script (the test bridge is test-only)');

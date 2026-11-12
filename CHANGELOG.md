@@ -9,6 +9,10 @@ format. The project follows [Semantic Versioning](https://semver.org/).
 
 The first release: a zip to load unpacked in Chrome or Edge.
 
+### Fixed
+
+- Chrome showed "You need to request host permissions in the manifest file in order to be notified about requests from the webRequest API" on the extension's card after a fresh install. The manifest now holds the loopback address `http://127.0.0.1/*` (this computer, where local apps live); every website still needs your approval. A test loads the release build and checks the card has no errors.
+
 ### Changed
 
 - Sites are found with the Public Suffix List, so `alice.github.io` and `carol.blogspot.com` are sites of their own instead of being grouped under `github.io` and `blogspot.com`, and a rule or permission for one covers that site only. The list is refreshed with `node scripts/update-public-suffixes.mjs`.

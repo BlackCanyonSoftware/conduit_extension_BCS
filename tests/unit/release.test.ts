@@ -87,14 +87,14 @@ describe('the release zip', () => {
     for (const entry of entries) expect(crc32(entry.data), entry.name).toBe(entry.crc);
   });
 
-  it('holds a release manifest: the package version, no granted sites, no <all_urls>', () => {
+  it('holds a release manifest: the package version, no website granted, no <all_urls>', () => {
     const entry = readZip(readFileSync(zipPath(first))).find(
       (item) => item.name === 'manifest.json',
     );
     const manifest = JSON.parse(entry?.data.toString('utf8') ?? '{}') as Record<string, unknown>;
 
     expect(manifest.version).toBe(version);
-    expect(manifest.host_permissions).toBeUndefined();
+    expect(manifest.host_permissions).toEqual(['http://127.0.0.1/*']);
     expect(JSON.stringify(manifest)).not.toContain('<all_urls>');
   });
 
@@ -140,7 +140,7 @@ describe('the Firefox release zip', () => {
         type: 'module',
       });
       expect(JSON.stringify(manifest)).toContain('conduit@blackcanyonsoftware');
-      expect(manifest.host_permissions).toBeUndefined();
+      expect(manifest.host_permissions).toEqual(['http://127.0.0.1/*']);
       expect(manifest.content_scripts).toBeUndefined();
       expect(names.filter((name) => name.startsWith('test/'))).toEqual([]);
       expect(names).toContain('background/service-worker.js');

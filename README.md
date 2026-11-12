@@ -50,8 +50,8 @@ a few clicks. There is nothing to sign in to and nothing is sent anywhere.
 5. Click **Load unpacked**, pick the folder from step 2 (the one containing `manifest.json`), and confirm. A card called **Conduit** appears.
 6. Click the puzzle-piece icon in the browser's toolbar, then the pin beside **Conduit**, so its purple cube icon stays in view.
 
-A fresh install does nothing until you create and approve a rule, and it can read no site until you
-allow it. To update, download the new zip, unzip it over the old folder, and click the circular
+A fresh install does nothing until you create and approve a rule, and it can read no website until you
+allow it. (The only address it holds from the start is `127.0.0.1`, this computer, where local apps live.) To update, download the new zip, unzip it over the old folder, and click the circular
 arrow on Conduit's card on the extensions page.
 
 **Firefox (140 or newer)**

@@ -151,7 +151,7 @@ the person (Retry now or Discard). While capture is paused nothing is sent and n
 ## Cross-cutting
 
 - **Service worker lifetime:** MV3 workers stop when idle, so every capture is persisted before anything else; retries use `chrome.alarms`.
-- **Permissions:** host access requested per site at approval time (`optional_host_permissions`).
+- **Permissions:** host access requested per site at approval time (`optional_host_permissions`); the manifest itself holds only `http://127.0.0.1/*` (ADR 0004, amendment).
 - **Errors:** specific error types; the UI states what happened and what to do; the log keeps details.
 - **Logging:** the delivery log records time, rule, byte count and destination, never the values.
 - **Security model:** nothing is captured without an approved rule; imported rules arrive disabled; non-loopback destinations require a typed confirmation; previews are redacted.

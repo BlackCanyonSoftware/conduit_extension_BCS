@@ -14,7 +14,7 @@
 - **Example app**: `examples/reference_sink.py` (standard library only). Contract: `docs/INTEGRATION-CONTRACT.md`.
 - **Header rules** (milestone 4): the new-rule form has a "What to capture" choice (Cookies, Request headers, Response headers). `src/core/headers.ts` picks only the named headers out of a request or response (`matchRuleHeaders`); `src/platform/headers.ts` is the only `webRequest` code (observe-only `onSendHeaders` / `onHeadersReceived`, skips Conduit's own requests); the worker keeps the active header rules in memory until storage changes, and reads the full state only on a match. Header rules have no "Capture now". Header names are stored lower case.
 - **Storage rules and extractors** (milestone 5): `src/core/page-storage.ts` (`matchRuleStorage`, `storageNeeds`: which keys a page is asked for, never more), `src/core/extract.ts` (checking, applying, describing extractors; used by cookie, header and storage matching alike), `src/platform/page-storage.ts` (the only `chrome.scripting` code: reads named keys with `executeScript`, plus open-tab lookup and the page-loaded event), `src/core/sinks/want.ts` (request to rule fields). The new `scripting` permission needs no extra prompt; site access is still per site.
-- Manifest permissions: `activeTab`, `alarms`, `cookies`, `scripting`, `storage`, `webRequest`; `optional_host_permissions: ["*://*/*"]`; no `host_permissions` in release builds.
+- Manifest permissions: `activeTab`, `alarms`, `cookies`, `scripting`, `storage`, `webRequest`; `optional_host_permissions: ["*://*/*"]`; `host_permissions` is only `http://127.0.0.1/*` (ADR 0004, amendment), so release builds name no website.
 - Tests: 306 unit tests and 82 end-to-end tests (cookies and popup 17, rules 18, apps 19, headers 12, storage and extractors 16).
 
 ## Verification so far
@@ -25,7 +25,7 @@
 - `storage.spec.ts` (16) keeps its test page open while the page loads (a person browsing does the same): Conduit reads a page's storage after it finishes loading, and a tab closed before that read is missed.
 - The tests found and fixed: the discard filter being fed its own message type, the page growing wider than a phone because of the table, a missing silent-drop report for a full queue.
 - Screenshots viewed: review of requests, apps and failure alert (dark, settled), phone width (no sideways overflow).
-- Security pass: all network calls are in `src/platform/sinks.ts` (no credentials, no referrer, no cache, no redirects, timeouts, capped answer size); no unsafe DOM use; no runtime dependencies; release manifest grants no sites; moderate dev-only `minimatch` advisory unchanged.
+- Security pass: all network calls are in `src/platform/sinks.ts` (no credentials, no referrer, no cache, no redirects, timeouts, capped answer size); no unsafe DOM use; no runtime dependencies; release manifest names no website (only the loopback address); moderate dev-only `minimatch` advisory unchanged.
 - **Not verified:**
   - **Chrome's real permission prompts** for a site (rule creation), for an app and its sites together, and for "Look on this computer". Tests pre-grant `localhost` and `127.0.0.1` through a test-only build flag; releases never do. The owner has not yet reported on a visible Chrome try-out of milestones 1 to 3.
   - **A forced idle stop of the service worker.** The alarm retry works (a failed delivery was resent about 30 seconds later), but Playwright keeps the worker attached, so a real stop and restart is unproven.
@@ -69,6 +69,7 @@ See PRD section 10.
 
 ## Session log
 
+- 2026-11-12: Chrome showed "You need to request host permissions in the manifest file in order to be notified about requests from the webRequest API" on a fresh install (reported from the owner's Chrome, Developer mode on). Reproduced in headless Chromium by turning Developer mode on and reloading the extension; the end-to-end tests had not seen it because their build is granted `localhost`. Fix chosen by the owner: `host_permissions: ["http://127.0.0.1/*"]` (ADR 0004 amendment); new regression test `tests/e2e/release-build.spec.ts` loads the release build and fails if the card has any error.
 - 2026-11-08: milestone 6 (Firefox, ADR 0010): `--target firefox` build, header listener fallback and own-request check for Firefox, `--test-bridge` content script for tests, a small debugging-protocol client to install the add-on into Playwright's Firefox, 16 Firefox tests, `package-release.mjs --target firefox`, CI jobs with a 10-minute timeout. The popup and rules page have not been opened in Firefox; the release zip is unsigned.
 - 2026-11-08: first release prepared (0.1.0): `scripts/package-release.mjs` (clean build, manifest checks, deterministic zip, SHA-256), `.github/workflows/release.yml` (on a `v*` tag), README install steps for Chrome and Edge, release steps in CONTRIBUTING. Not tagged or pushed: the owner tags `v0.1.0` when ready.
 - 2026-11-08: Public Suffix List (ADR 0009): `public-suffix.ts` matcher, generated `public-suffix-data.ts` (list 2026-11-06), `hostBelongsToSite`, exact-host rule for a host that is itself a suffix; tech debt entry replaced by a "refresh the snapshot" note.

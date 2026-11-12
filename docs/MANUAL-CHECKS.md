@@ -84,13 +84,15 @@ this session only and disappears when you close Firefox.
 
 ---
 
-## Check 1. Conduit reads no site until you allow it
+## Check 1. Conduit reads no website until you allow it
 
 1. In your browser, go to `https://github.com` (sign in if it asks).
 2. Click Conduit's purple cube in the toolbar. A small window opens.
 3. **You should see:** the heading **Cookies for this site**, the text **Allow Conduit to read github.com cookies?**,
    and a button **Allow access to github.com**. No cookies are listed yet.
 4. Close the window by clicking anywhere on the page.
+5. Go to `chrome://extensions` (Edge: `edge://extensions`) and look at Conduit's card. **You should see no red Errors button.**
+   (If you see one, click it and send me the text.)
 
 Fails if: cookies are already listed before you clicked anything.
 

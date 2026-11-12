@@ -4,6 +4,7 @@
   "description": "Export your own browser's cookies and hand approved data to local apps you choose.",
   "minimum_chrome_version": "120",
   "permissions": ["activeTab", "alarms", "cookies", "scripting", "storage", "webRequest"],
+  "host_permissions": ["http://127.0.0.1/*"],
   "optional_host_permissions": ["*://*/*"],
   "icons": {
     "16": "theme/icon/icon-transparent-16.png",

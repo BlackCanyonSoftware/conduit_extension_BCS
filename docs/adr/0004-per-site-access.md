@@ -30,6 +30,16 @@ it began as a short list of country-style suffixes).
 
 ## Consequences
 
-- A fresh install can read no site; each site is allowed once, by the person, in the browser's own prompt.
+- A fresh install can read no website; each site is allowed once, by the person, in the browser's own prompt. (The one standing access is to this computer's loopback address; see the amendment below.)
 - Sites on shared suffixes (for example `github.io`) are their own sites, one per tenant; the prompt always shows the exact site being asked for.
 - End-to-end tests cannot click the browser's permission prompt, so they use a test build that pre-grants one local test site (`--host-permission`); release builds never do.
+
+## Amendment, 2026-11-12: the loopback address is in the manifest
+
+`host_permissions` holds exactly one entry, `http://127.0.0.1/*`, the address of this computer.
+
+**Why.** Chrome will not register `webRequest` listeners for an extension that holds no host permission at all, and says so as an error on the extension's card ("You need to request host permissions in the manifest file in order to be notified about requests from the webRequest API"). Header rules (ADR 0007) need those listeners registered when the worker starts, so a fresh install with no site raised that error every time. Registering them later, after the first approval, would lose the requests that wake a stopped worker, because only listeners added while the worker first starts are kept for waking it. A test (`tests/e2e/release-build.spec.ts`) loads the release build with Developer mode on and fails if the card has any error.
+
+**What it means.** A fresh install can read no _website_ until the person allows it, as before. It can reach apps on 127.0.0.1 without asking, which is where local apps live and which the person still approves app by app (ADR 0006). A web page served from 127.0.0.1 is the one website Conduit can read from the start. The permission is loopback only: the packaging script refuses a manifest whose `host_permissions` is anything else, and `<all_urls>` is still never in it.
+
+**Rejected:** keeping the manifest empty and accepting the error until the first approval. The error is visible on the card (with Developer mode on, which an unpacked install needs) and header capture would not start until the worker restarted after the first approval.

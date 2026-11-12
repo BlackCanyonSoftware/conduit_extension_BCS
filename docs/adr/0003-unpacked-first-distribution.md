@@ -27,6 +27,6 @@ text are settled.
 ## How a release is made
 
 - `package.json` holds the version; the build copies it into `manifest.json`.
-- `node scripts/package-release.mjs` makes a clean build (never with the end-to-end tests' granted sites), checks that the manifest has the same version, grants no sites and does not ask for `<all_urls>`, and writes `release/conduit-<version>.zip` plus a `.sha256` file. The zip is written by the script itself, in sorted order with fixed timestamps, so the same source gives the same bytes and no packaging dependency is needed.
+- `node scripts/package-release.mjs` makes a clean build (never with the end-to-end tests' granted sites), checks that the manifest has the same version, names no website (only the loopback address) and does not ask for `<all_urls>`, and writes `release/conduit-<version>.zip` plus a `.sha256` file. The zip is written by the script itself, in sorted order with fixed timestamps, so the same source gives the same bytes and no packaging dependency is needed.
 - Pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`: it checks the tag against `package.json`, runs `npm run check`, packages, and attaches the zip and checksum to a GitHub release, with the changelog section for that version as the notes. The end-to-end tests are not part of that job.
 - The README's Install section is the step-by-step for Chrome and Edge.

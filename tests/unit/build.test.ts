@@ -60,8 +60,10 @@ describe('built manifest', () => {
     expect(existsSync(path.join(outDir, 'test'))).toBe(false);
   });
 
-  it('requests site access per site at runtime, not in the manifest', () => {
-    expect(manifest.host_permissions ?? []).toEqual([]);
+  it('names no website in the manifest, only apps on this computer; sites are asked for at runtime', () => {
+    // Chrome refuses webRequest listeners from an extension with no host permission at all, which
+    // shows as an error on a fresh install. Loopback is where local apps live, so it is the one.
+    expect(manifest.host_permissions ?? []).toEqual(['http://127.0.0.1/*']);
     expect(manifest.optional_host_permissions ?? []).not.toContain('<all_urls>');
   });
 
@@ -151,10 +153,10 @@ describe('Firefox build (US-017)', () => {
     expect(firefox.minimum_chrome_version).toBeUndefined();
   });
 
-  it('asks for the same permissions and grants no sites, like the Chrome build', () => {
+  it('asks for the same permissions and the same access, like the Chrome build', () => {
     expect(firefox.permissions).toEqual(manifest.permissions);
     expect(firefox.optional_host_permissions).toEqual(manifest.optional_host_permissions);
-    expect(firefox.host_permissions ?? []).toEqual([]);
+    expect(firefox.host_permissions).toEqual(manifest.host_permissions);
     expect(firefox.version).toBe(manifest.version);
   });
 

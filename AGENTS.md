@@ -51,7 +51,7 @@ npm run format         # Prettier, write
 - An app only proposes requests (with a required reason); the person approves, and each approved request is a rule. A rules file never carries an app destination or an approval.
 - A failed delivery is shown at once and retried from `chrome.alarms`; the delivery log never holds values; pausing halts delivery.
 - Imported rules arrive disabled and need the same approval as a hand-made one.
-- Site access is requested per site at runtime; never `<all_urls>` in the manifest.
+- Site access is requested per site at runtime; never `<all_urls>` in the manifest. The manifest's only `host_permissions` entry is `http://127.0.0.1/*` (ADR 0004, amendment); the release packaging refuses anything else.
 - Captures are written to extension storage immediately; retries use `chrome.alarms`.
 - No telemetry, no remote config, no remote code, no bundled destinations.
 - Previews are redacted (first and last four characters) until revealed.
