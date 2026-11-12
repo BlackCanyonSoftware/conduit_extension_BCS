@@ -51,6 +51,10 @@ Run the same commands again after any change to the code, then reload Conduit (A
    `dist` once so it is selected, and click **Select Folder**. (Pick the folder itself, not a file inside it.)
 5. A card called **Conduit** appears on the page. It should say version **0.1.0** and have no red **Errors** button.
 6. To pick up a rebuilt version later, click the circular arrow on Conduit's card.
+   Chrome keeps an extension's old errors after a reload, so an **Errors** button from an earlier version stays on the card.
+   To tell an old error from a new one: click **Errors**, click **Clear all** at the top right, press the arrow at the top left
+   to go back, click the circular reload arrow on Conduit's card again, then open any website in another tab and come back.
+   If the **Errors** button has not returned, there are no new errors.
 7. To find Conduit's button: click the puzzle-piece icon at the top right of Chrome, next to the address bar.
    A list opens. Click the pin icon beside **Conduit** so its icon (a purple cube) stays in the toolbar.
 
