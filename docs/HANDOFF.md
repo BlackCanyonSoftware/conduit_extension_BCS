@@ -44,7 +44,7 @@
 ## Next steps
 
 1. A person tries the permission flows in a visible Chrome and, if possible, runs the example app: `python examples/reference_sink.py --site <a site you use> --names <a cookie name>`, then Local apps, Look on this computer.
-2. Owner: the visible-browser checks in `docs/MANUAL-CHECKS.md` (Chrome, Edge, and section 9 for Firefox). Then: signing the Firefox zip through Mozilla's add-on site (needs the owner's account and keys), and a first release (`git tag v0.1.0`).
+2. Owner: the visible-browser checks in `docs/MANUAL-CHECKS.md` (install steps in Part A, then checks 1 to 9; Firefox is in Part A4 and the last section). Then: signing the Firefox zip through Mozilla's add-on site (needs the owner's account and keys), and a first release (`git tag v0.1.0`).
 3. Owner pushes the commits; CI is on again (see the Gotchas entry about it) and should finish in a few minutes. If a run goes over 10 minutes, disable the workflow and run locally.
 
 ## Tech debt and brand-kit findings

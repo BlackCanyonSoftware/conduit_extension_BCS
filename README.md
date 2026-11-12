@@ -38,22 +38,36 @@ delivery log shows the result.
 
 ## Install
 
-Conduit ships as a zip you load unpacked in Chrome or Edge. There is nothing to sign in to and
-nothing is sent anywhere.
+Conduit is not in the Chrome, Edge or Firefox stores yet. You install it from a zip file, which is
+a few clicks. There is nothing to sign in to and nothing is sent anywhere.
+
+**Chrome and Edge**
 
 1. Download `conduit-<version>.zip` from the [latest release](https://github.com/BlackCanyonSoftware/conduit_extension_BCS/releases/latest). The `.sha256` file beside it lets you check the download: the SHA-256 of the zip should match it.
-2. Unzip it into a folder you will keep, for example `Documents\Conduit`. The browser reads the extension from that folder every time it starts, so do not delete or move it.
-3. Open `chrome://extensions` (Edge: `edge://extensions`) and switch on **Developer mode**.
-4. Choose **Load unpacked** and pick the folder that contains `manifest.json`.
-5. Click the puzzle-piece icon in the toolbar and pin **Conduit**.
+2. Unzip it into a folder you will keep, for example `Documents\Conduit`. The browser reads the extension from that folder every time it starts, so do not delete or move it. The folder should contain a file named `manifest.json`.
+3. In the browser's address bar, type `chrome://extensions` (Edge: `edge://extensions`) and press Enter.
+4. Switch **Developer mode** on. In Chrome it is a toggle at the top right of the page; in Edge it is in the left-hand panel near the bottom.
+5. Click **Load unpacked**, pick the folder from step 2 (the one containing `manifest.json`), and confirm. A card called **Conduit** appears.
+6. Click the puzzle-piece icon in the browser's toolbar, then the pin beside **Conduit**, so its purple cube icon stays in view.
 
 A fresh install does nothing until you create and approve a rule, and it can read no site until you
-allow it. To update, download the new zip, unzip it over the old folder, and press the reload
-arrow on Conduit's card in `chrome://extensions`.
+allow it. To update, download the new zip, unzip it over the old folder, and click the circular
+arrow on Conduit's card on the extensions page.
 
-**Firefox:** the release also has `conduit-<version>-firefox.zip`. Firefox only keeps add-ons that Mozilla has signed, so until that zip is signed, load it temporarily: open `about:debugging`, choose **This Firefox**, then **Load Temporary Add-on**, and pick the zip. It stays until Firefox restarts. Firefox 140 or newer.
+**Firefox (140 or newer)**
 
-To build the zips yourself: `npm ci && node scripts/package-release.mjs` writes `release/conduit-<version>.zip`, and adding `--target firefox` writes the Firefox one.
+Firefox only keeps add-ons that Mozilla has signed, and Conduit's is not signed yet, so Firefox
+loads it for one session and removes it when it closes.
+
+1. Download `conduit-<version>-firefox.zip` from the same release page (you do not need to unzip it).
+2. In Firefox's address bar type `about:debugging#/runtime/this-firefox` and press Enter.
+3. Under **Temporary Extensions** click **Load Temporary Add-on...** and pick the zip.
+
+**Building it yourself:** `npm ci`, then `npm run build` makes the folder `dist` to load as in step 5
+above (or `npm run build:firefox` makes `dist-firefox`, and you pick the `manifest.json` inside it).
+`node scripts/package-release.mjs` makes the release zip, and adding `--target firefox` makes the Firefox one.
+
+New to Conduit? [docs/MANUAL-CHECKS.md](docs/MANUAL-CHECKS.md) walks through every feature with the exact clicks.
 
 ## Develop
 
