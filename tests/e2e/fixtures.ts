@@ -33,7 +33,7 @@ export const test = base.extend<Fixtures>({
   context: async ({}, use) => {
     const profileDir = mkdtempSync(path.join(tmpdir(), 'conduit-e2e-'));
     const context = await chromium.launchPersistentContext(profileDir, {
-      channel: 'chromium',
+      channel: process.env.CONDUIT_CHANNEL ?? 'chromium',
       headless: true,
       args: [`--disable-extensions-except=${EXTENSION_PATH}`, `--load-extension=${EXTENSION_PATH}`],
     });

@@ -22,6 +22,7 @@ The first release: a zip to load unpacked in Chrome or Edge.
 
 ### Added
 
+- Tests that run Conduit's popup and rules page in the Firefox installed on the computer (`npm run test:e2e:firefox-ui`), and the Chrome tests can run in Edge (`CONDUIT_CHANNEL=msedge`).
 - Firefox (140 or newer): `conduit-<version>-firefox.zip` in each release, loaded temporarily from `about:debugging` until Mozilla signs it. The same rules, approval, capture, headers, page storage, extractors and delivery. `node scripts/build.mjs --target firefox` builds it; the background is tested in Firefox with `npm run test:e2e:firefox`.
 - A release zip: `node scripts/package-release.mjs` builds it (with a checksum), and pushing a `vX.Y.Z` tag publishes it as a GitHub release. The README has the install steps for Chrome and Edge.
 - Storage reads: a rule can capture named localStorage or sessionStorage keys from a site, read when a page finishes loading and on "Capture now". Only the keys you name are read.

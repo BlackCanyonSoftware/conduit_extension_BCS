@@ -265,6 +265,24 @@ waiting retry survives that.
 
 ---
 
+## What has already been run by machine
+
+You only need to do these by hand where the table says "yours". The machine runs use the same build you install.
+
+| Check                                  | Edge                                                                        | Firefox                                                 |
+| -------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Install, no errors on the card         | done (Edge 157, headless)                                                   | loaded cleanly in every test                            |
+| 1. Reads no website until allowed      | done (the whole end-to-end suite passes in Edge)                            | not run                                                 |
+| 2. Allowing a site; cookie export      | the real browser prompt is yours                                            | the real prompt, and the popup's cookie list, are yours |
+| 4. A rule and a capture                | done                                                                        | done (rules page, in the real Firefox)                  |
+| 5. Headers, page storage, a JSON field | done                                                                        | done                                                    |
+| 6. An app, delivery                    | done (the delivery path); the app prompt is yours                           | done (connect, approve, deliver)                        |
+| 7. Pausing                             | done                                                                        | done                                                    |
+| 8. Background part waking              | done as far as a test can                                                   | the automated tests cover the alarm retry               |
+| 9. Look and feel                       | accessibility scans pass in light and dark; keyboard and phone width: yours | theme switch persists; the rest is yours                |
+
+What no machine can do is click your browser's own permission box and look at the real toolbar. Those are the parts marked "yours".
+
 ## Firefox: what to repeat
 
 After A4, run checks 1 to 7 and 9 in Firefox. Differences: its confirmation boxes look different (a panel under the

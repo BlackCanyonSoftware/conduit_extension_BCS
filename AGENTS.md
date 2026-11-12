@@ -19,6 +19,7 @@ npm run check          # format check, lint, typecheck, tests, build
 npm test               # unit tests (Vitest)
 npm run test:e2e       # builds, then Playwright in headless Chromium
 npm run test:e2e:firefox  # builds the Firefox version, then the background tests in Firefox
+npm run test:e2e:firefox-ui  # the popup and rules page in the installed Firefox (Marionette)
 npm run dev            # rebuild dist/ on change
 npm run build          # unpacked extension into dist/
 npm run format         # Prettier, write
@@ -59,7 +60,7 @@ npm run format         # Prettier, write
 
 ## Working agreements
 
-- **CI runs the same checks as `npm run check` plus the end-to-end tests.** A CI run that takes over 10 minutes gets disabled on GitHub and the checks run locally instead; keep it under that (the whole suite takes about 3 minutes). Run `npm run check`, `npm run test:e2e` and `npm run test:e2e:firefox` here before committing, and report what you ran.
+- **CI runs the same checks as `npm run check` plus the end-to-end tests.** A CI run that takes over 10 minutes gets disabled on GitHub and the checks run locally instead; keep it under that (the whole suite takes about 3 minutes). Run `npm run check`, `npm run test:e2e`, `npm run test:e2e:firefox` and `npm run test:e2e:firefox-ui` here before committing, and report what you ran.
 - Report only what you ran and observed; mark anything unverified.
 - Never weaken, skip or delete a test, or bypass a hook, to get a passing run.
 - Label placeholders and list them in `docs/HANDOFF.md`.

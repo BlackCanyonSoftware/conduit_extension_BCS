@@ -1,8 +1,18 @@
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { connectApp, deliveryRows, logRows, visit } from './helpers';
+
+/**
+ * Opens a page on the test site and leaves it open, as a person browsing does. The test page asks
+ * for /ping with a header of its own after it loads; closing the tab the moment it has loaded can
+ * cancel that request before the browser has sent it, so there would be nothing to see.
+ */
+async function browse(context: BrowserContext, url: string): Promise<void> {
+  const page = await context.newPage();
+  await page.goto(url);
+}
 
 /** Fills in and approves a header rule through the page, as a person would. */
 async function createHeaderRule(
@@ -66,7 +76,7 @@ test.describe('header capture (US-012)', () => {
     const options = await openOptions();
     await createHeaderRule(options, 'request', 'localhost', 'x-conduit-req');
 
-    await visit(context, `${site.url}?req=request-secret-0123456789`);
+    await browse(context, `${site.url}?req=request-secret-0123456789`);
 
     await expect(logRows(options)).toHaveCount(2);
     const entry = logRows(options).nth(1);
@@ -171,7 +181,7 @@ test.describe('header capture (US-012)', () => {
     await options.getByRole('button', { name: 'Add app and approve 1 request' }).click();
     await expect(options.getByText(/1 request approved\./)).toBeVisible();
 
-    await visit(context, `${site.url}?req=delivered-header-4242`);
+    await browse(context, `${site.url}?req=delivered-header-4242`);
 
     await expect.poll(() => testSink.received.length).toBe(1);
     expect(testSink.received[0]).toMatchObject({

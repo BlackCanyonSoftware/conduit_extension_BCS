@@ -42,7 +42,7 @@ test.afterEach(async () => {
 
 test('a fresh install, browsing a site it has not been allowed to read, has no errors', async () => {
   context = await chromium.launchPersistentContext(profileDir, {
-    channel: 'chromium',
+    channel: process.env.CONDUIT_CHANNEL ?? 'chromium',
     headless: true,
     args: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`],
   });

@@ -20,6 +20,7 @@
     "tests",
     "vitest.config.ts",
     "playwright.config.ts",
-    "playwright.firefox.config.ts"
+    "playwright.firefox.config.ts",
+    "playwright.firefox-ui.config.ts"
   ]
 }
