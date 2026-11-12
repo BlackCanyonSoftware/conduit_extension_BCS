@@ -243,6 +243,10 @@ Keep the `https://github.com` tab open in this window. Do these on the **Rules**
 Conduit's background part is stopped by the browser when idle and started again when needed. This checks a
 waiting retry survives that.
 
+**A machine has already done this check, in Chromium and in Edge** (`tests/e2e/worker-restart.spec.ts`): it makes a delivery fail,
+stops the worker with the browser's own stop command, confirms the browser reports it stopped, and sees the retry still arrive
+about 30 seconds later. You do not need to do it by hand; the steps stay here if you want to see it yourself.
+
 1. Make sure the app is stopped (it is, if you pressed Ctrl+C at the end of check 6).
 2. On the Rules tab click **Send now**. It fails (the red `1 delivery has not gone through` box appears) and Conduit will retry
    by itself in 30 seconds.
@@ -278,7 +282,7 @@ You only need to do these by hand where the table says "yours". The machine runs
 | 5. Headers, page storage, a JSON field | done                                                                        | done                                                    |
 | 6. An app, delivery                    | done (the delivery path); the app prompt is yours                           | done (connect, approve, deliver)                        |
 | 7. Pausing                             | done                                                                        | done                                                    |
-| 8. Background part waking              | done as far as a test can                                                   | the automated tests cover the alarm retry               |
+| 8. Background part waking              | done: the worker is stopped and the retry still arrives                     | the automated tests cover the alarm retry               |
 | 9. Look and feel                       | accessibility scans pass in light and dark; keyboard and phone width: yours | theme switch persists; the rest is yours                |
 
 What no machine can do is click your browser's own permission box and look at the real toolbar. Those are the parts marked "yours".
