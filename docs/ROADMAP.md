@@ -5,15 +5,15 @@ in progress, done.
 
 ## Milestones
 
-| #   | Milestone                                                                                                                                                                    | Stories                        | Size | Status                                                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---- | ---------------------------------------------------------------------------- |
-| 0   | **Walking skeleton:** TypeScript + esbuild build, loadable MV3 popup in the Conduit brand theme with light/dark toggle, lint, type check, unit test, one Playwright test, CI | US-015, US-016                 | M    | done                                                                         |
-| 1   | **Cookie export:** per-site list, per-cookie selection, three formats, copy and download, redacted previews                                                                  | US-001, US-002, US-003         | M    | done (browser permission prompt not yet seen by a person)                    |
-| 2   | **Rules and approval:** rule model, one-sentence summaries, approval UI, kill switch, local capture log, rules import/export (arrive disabled)                               | US-004, US-005, US-006, US-007 | L    | done (permission prompt not yet seen by a person)                            |
-| 3   | **Sinks:** handshake, approval of what a sink asks for, delivery with retry via alarms, delivery log, non-loopback confirmation, custom-route option, reference sink script  | US-008, US-009, US-010, US-011 | L    | done (permission prompts and a run with a real app not yet seen by a person) |
-| 4   | **Header capture:** header rule kind on top of the rules engine                                                                                                              | US-012                         | M    | done (permission prompt and a real site not yet seen by a person)            |
-| 5   | **Storage and extractors:** storage reads, regex/JSON-path extractors                                                                                                        | US-013, US-014                 | M    | done (permission prompt and a real site not yet seen by a person)            |
-| 6   | **Firefox:** compatibility layer, signed XPI route                                                                                                                           | US-017                         | M    | done; pages tested in the installed Firefox, release not yet signed          |
+| #   | Milestone                                                                                                                                                                    | Stories                        | Size | Status                                                                 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---- | ---------------------------------------------------------------------- |
+| 0   | **Walking skeleton:** TypeScript + esbuild build, loadable MV3 popup in the Conduit brand theme with light/dark toggle, lint, type check, unit test, one Playwright test, CI | US-015, US-016                 | M    | done                                                                   |
+| 1   | **Cookie export:** per-site list, per-cookie selection, three formats, copy and download, redacted previews                                                                  | US-001, US-002, US-003         | M    | done; owner saw the prompt and a cookie export in Brave and Chrome     |
+| 2   | **Rules and approval:** rule model, one-sentence summaries, approval UI, kill switch, local capture log, rules import/export (arrive disabled)                               | US-004, US-005, US-006, US-007 | L    | done; owner made a rule, saw a capture and paused it in Brave          |
+| 3   | **Sinks:** handshake, approval of what a sink asks for, delivery with retry via alarms, delivery log, non-loopback confirmation, custom-route option, reference sink script  | US-008, US-009, US-010, US-011 | L    | done; the app prompt and a run with a real app by a person still to do |
+| 4   | **Header capture:** header rule kind on top of the rules engine                                                                                                              | US-012                         | M    | done; owner saw a header captured from a real site in Brave            |
+| 5   | **Storage and extractors:** storage reads, regex/JSON-path extractors                                                                                                        | US-013, US-014                 | M    | done; owner saw a page-storage capture from a real site in Brave       |
+| 6   | **Firefox:** compatibility layer, signed XPI route                                                                                                                           | US-017                         | M    | done; pages tested in the installed Firefox, release not yet signed    |
 
 Each milestone ends with: tests green, lint/type check/build green, a security pass
 against the OWASP Top 10 (as it applies to an extension), an accessibility pass,
@@ -31,9 +31,11 @@ Exit criteria per milestone:
 
 ## Now / Next / Later
 
-- **Now:** plan approval, brand assets, milestone 0.
-- **Next:** milestones 1 and 2.
-- **Later:** milestones 3 to 6; evaluate response-body capture via the debugger API; optional store submissions.
+All seven milestones are built and tested (371 unit tests, 84 Chromium end-to-end tests, the same suite in Edge, 16 Firefox background tests and 9 Firefox page tests; CI passes on GitHub). What is left is mostly the owner's:
+
+- **Now (owner):** push the commits; run `docs/MANUAL-CHECKS.md` check 6 with a real app (the machine has covered it); tag `v0.1.0` to publish the first release.
+- **Next:** sign the Firefox zip through Mozilla's add-on site (needs the owner's account and keys); try an app on another computer over https.
+- **Later:** evaluate response-body capture via the debugger API; optional store submissions (Chrome Web Store, Edge Add-ons, Firefox Add-ons), which need a privacy page and screenshots (ADR 0003).
 
 ## Tech debt
 
@@ -48,7 +50,7 @@ Every `TODO` in code must be listed here.
 - **Idea, not planned:** a "Create rule from selected cookies" button in the popup that opens the rule form pre-filled (still needing approval).
 - **One delivery per cookie change.** Each changed cookie is its own POST. Batching several cookies into one delivery can come with header and storage requests if an app needs it.
 - **Values wait in storage until delivered.** A queued delivery holds its value in extension storage (up to 200 of them) until it is sent or discarded. The delivery log never holds values.
-- **Header capture reads state per matching request.** Each request that matches a header rule loads the full state (log, queue) before deciding whether its value is new. Fine for a handful of rules; deduplicate before the read if a busy site makes it slow. `extraHeaders` is Chrome-specific and needs a compatibility step for Firefox (milestone 6).
+- **Header capture reads state per matching request.** Each request that matches a header rule loads the full state (log, queue) before deciding whether its value is new. Fine for a handful of rules; deduplicate before the read if a busy site makes it slow. (`extraHeaders` is asked for first and dropped where the browser refuses it, as in Firefox.)
 - **Storage is read when a page finishes loading** (and on "Capture now"), top frame only. A value a page writes later (a single-page app after sign-in) is picked up on the next load or "Capture now". A tab closed before the read is missed. Watching storage changes live would need a content script and more access.
 - **Regular expressions run in the service worker.** Patterns are limited (200 characters, no back-references, no repeated repeats such as `(a+)+`) and only tried on values up to 20,000 characters, but a hand-written pattern can still be slow. Move extraction to a worker with a time limit if patterns ever come from anywhere but the person or an app they approved.
 - **JSON paths are a small subset** (`$.a.b`, `[0]`, `['key']`; no wildcards or filters).
