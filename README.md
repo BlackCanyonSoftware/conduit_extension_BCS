@@ -41,11 +41,11 @@ delivery log shows the result.
 Conduit is not in the Chrome, Edge or Firefox stores yet. You install it from a zip file, which is
 a few clicks. There is nothing to sign in to and nothing is sent anywhere.
 
-**Chrome and Edge**
+**Chrome, Edge, Brave and other Chrome-based browsers**
 
 1. Download `conduit-<version>.zip` from the [latest release](https://github.com/BlackCanyonSoftware/conduit_extension_BCS/releases/latest). The `.sha256` file beside it lets you check the download: the SHA-256 of the zip should match it.
 2. Unzip it into a folder you will keep, for example `Documents\Conduit`. The browser reads the extension from that folder every time it starts, so do not delete or move it. The folder should contain a file named `manifest.json`.
-3. In the browser's address bar, type `chrome://extensions` (Edge: `edge://extensions`) and press Enter.
+3. In the browser's address bar, type `chrome://extensions` (Edge: `edge://extensions`, Brave: `brave://extensions`) and press Enter.
 4. Switch **Developer mode** on. In Chrome it is a toggle at the top right of the page; in Edge it is in the left-hand panel near the bottom.
 5. Click **Load unpacked**, pick the folder from step 2 (the one containing `manifest.json`), and confirm. A card called **Conduit** appears.
 6. Click the puzzle-piece icon in the browser's toolbar, then the pin beside **Conduit**, so its purple cube icon stays in view.
@@ -66,6 +66,8 @@ loads it for one session and removes it when it closes.
 **Building it yourself:** `npm ci`, then `npm run build` makes the folder `dist` to load as in step 5
 above (or `npm run build:firefox` makes `dist-firefox`, and you pick the `manifest.json` inside it).
 `node scripts/package-release.mjs` makes the release zip, and adding `--target firefox` makes the Firefox one.
+
+The Firefox zip and the `dist-firefox` folder are for Firefox only; Chrome-based browsers reject them with the error `'background.scripts' requires manifest version of 2 or lower`.
 
 New to Conduit? [docs/MANUAL-CHECKS.md](docs/MANUAL-CHECKS.md) walks through every feature with the exact clicks.
 

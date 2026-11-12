@@ -42,6 +42,8 @@ You do this once per browser. Conduit stays installed until you remove it (Firef
 
 Run the same commands again after any change to the code, then reload Conduit (A2 step 6).
 
+Which folder goes where: **`dist` is for Chrome, Edge, Brave and every other Chrome-based browser. `dist-firefox` is for Firefox only.**
+
 ### A2. Chrome
 
 1. Open Chrome. Click in the address bar at the top, type `chrome://extensions`, and press Enter.
@@ -66,6 +68,17 @@ Run the same commands again after any change to the code, then reload Conduit (A
 4. Pick `C:\Users\Kpier\Documents\Conduit_extension_BCS\dist` as in A2, step 4.
 5. Edge may say the extension is not from the store; that is expected. Keep it on.
 6. Click the puzzle-piece icon in Edge's toolbar and pin **Conduit**, as in A2, step 7.
+
+### A3b. Brave, Opera, Vivaldi and other Chrome-based browsers
+
+These work like Chrome and use the **same folder, `dist`**.
+
+1. In the browser's address bar type its extensions address and press Enter: `brave://extensions` (Brave),
+   `opera://extensions` (Opera), `vivaldi://extensions` (Vivaldi).
+2. Switch **Developer mode** on, click **Load unpacked**, and pick `C:\Users\Kpier\Documents\Conduit_extension_BCS\dist`, exactly as in A2.
+3. **Do not use `dist-firefox` in any of these.** That folder is for Firefox only. A Chrome-based browser shows the error
+   `'background.scripts' requires manifest version of 2 or lower` and Conduit's background part never starts.
+   If you see that error, click **Remove** on Conduit's card and load `dist` instead.
 
 ### A4. Firefox (version 140 or newer)
 
